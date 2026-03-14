@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Account</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: #020617;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Particle */
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0)
+            }
+
+            100% {
+                transform: translateY(-100vh)
+            }
+        }
+
+        /* Glass Card */
+
+        .card {
+
+            width: 380px;
+            padding: 45px;
+
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+
+            color: white;
+
+            animation: fade 1s ease;
+
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(30px)
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            opacity: 0.7;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        /* Inputs */
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        input {
+
+            width: 100%;
+            padding: 13px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+
+            outline: none;
+
+            transition: 0.3s;
+
+        }
+
+        input:focus {
+
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+
+        }
+
+        /* Button */
+
+        button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #38bdf8, #6366f1);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.6);
+
+        }
+
+        /* message */
+
+        #msg {
+
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+
+        }
+
+        /* link */
+
+        .link {
+
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+
+        }
+
+        a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* mobile */
+
+        @media(max-width:500px) {
+
+            .card {
+                width: 90%;
+            }
+
+        }
+
+        #msg {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            color: #22c55e;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="card">
+
+        <div class="logo">Create Account</div>
+        <div class="subtitle">Start your trading journal</div>
+
+        <div class="input-group">
+            <input id="username" placeholder="Username">
+        </div>
+
+        <div class="input-group">
+            <input id="password" type="password" placeholder="Password">
+        </div>
+
+        <button id="registerBtn" onclick="register()">
+            <span id="btnText">Register</span>
+            <span id="loader" style="display:none;">⏳ Creating...</span>
+        </button>
+
+        <div id="msg"></div>
+
+        <div class="link">
+            Already have account?
+            <a href="login.html">Login</a>
+        </div>
+
+    </div>
+
+    <script>
+
+        /* particle background */
+
+        for (let i = 0; i < 70; i++) {
+
+            let p = document.createElement("div")
+
+            p.className = "particle"
+
+            p.style.left = Math.random() * 100 + "%"
+
+            p.style.animationDuration = (6 + Math.random() * 10) + "s"
+
+            p.style.opacity = Math.random()
+
+            document.body.appendChild(p)
+
+        }
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>

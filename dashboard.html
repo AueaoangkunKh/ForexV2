@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Trading Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <header>
+
+            <div class="logo">
+                📊 <span>Trading Journal</span>
+            </div>
+
+            <div class="header-right">
+
+                <div class="status-dot"></div>
+                <div class="status-text">LIVE</div>
+
+                <button class="reset-btn" onclick="resetTrades()">
+                    Reset
+                </button>
+
+                <button class="logout-btn" onclick="logout()">
+                    Logout
+                </button>
+
+            </div>
+
+        </header>
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <h3>Total PnL</h3>
+                <p id="totalPnL">$0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Winrate</h3>
+                <p id="winrate">0%</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Trades</h3>
+                <p id="totalTrades">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Max Drawdown</h3>
+                <p id="maxDD">$0</p>
+            </div>
+
+        </div>
+
+        <div class="grid">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h2>📈 Equity Curve</h2>
+                </div>
+
+                <canvas id="equityChart"></canvas>
+
+                <div class="analytics">
+
+                    <div class="analytic-box">
+                        <p>Profit Factor</p>
+                        <h3 id="profitFactor">0</h3>
+                    </div>
+
+                    <div class="analytic-box">
+                        <p>Risk Reward</p>
+                        <h3 id="riskReward">0</h3>
+                    </div>
+
+                    <div class="analytic-box">
+                        <p>Expectancy</p>
+                        <h3 id="expectancy">0</h3>
+                    </div>
+
+                    <div class="analytic-box">
+                        <p>Strategy Score</p>
+                        <h3 id="strategyScore">0</h3>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h2>📊 Winrate Chart</h2>
+                </div>
+
+                <canvas id="winChart"></canvas>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h2>📉 PnL Distribution</h2>
+                </div>
+
+                <canvas id="pnlChart"></canvas>
+
+            </div>
+
+            <div class="card calendar-card">
+
+                <div class="calendar-header">
+
+                    <button onclick="prevMonth()">◀</button>
+
+                    <h2 id="monthYear"></h2>
+
+                    <button onclick="nextMonth()">▶</button>
+
+                </div>
+
+                <div class="calendar" id="calendar"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TRADE MODAL -->
+
+    <div class="modal" id="tradeModal">
+
+        <div class="modal-content">
+
+            <h2>Add Trade</h2>
+
+            <p id="modalDate"></p>
+
+            <input id="pnlInput" placeholder="PnL ($)">
+
+            <div class="modal-buttons">
+
+                <button class="save" id="saveTrade">
+                    Save
+                </button>
+
+                <button class="delete" id="deleteTrade">
+                    Delete
+                </button>
+
+                <button class="cancel" onclick="closeModal()">
+                    Cancel
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- DELETE CONFIRM -->
+
+    <div class="modal" id="confirmModal">
+
+        <div class="modal-content">
+
+            <h2>Delete Trade</h2>
+
+            <p>Are you sure?</p>
+
+            <div class="modal-buttons">
+
+                <button class="delete" id="confirmDeleteBtn">
+                    Delete
+                </button>
+
+                <button class="cancel" id="cancelDeleteBtn">
+                    Cancel
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RESET CONFIRM -->
+
+    <div class="modal" id="resetModal">
+
+        <div class="modal-content">
+
+            <h2>Reset All Trades</h2>
+
+            <p>This will delete all trades</p>
+
+            <div class="modal-buttons">
+
+                <button class="delete" id="confirmResetBtn">
+                    Reset
+                </button>
+
+                <button class="cancel" id="cancelResetBtn">
+                    Cancel
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOAST -->
+
+    <div class="toast" id="toast">
+
+        <span id="toastText"></span>
+
+    </div>
+
+     <script type="module" src="js/dashboard.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+
+            height: 100vh;
+
+            background: #020617;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            overflow: hidden;
+
+        }
+
+        /* PARTICLES */
+
+        .particle {
+
+            position: absolute;
+
+            width: 3px;
+            height: 3px;
+
+            background: white;
+
+            border-radius: 50%;
+
+            opacity: 0.4;
+
+            animation: float linear infinite;
+
+        }
+
+        @keyframes float {
+
+            0% {
+                transform: translateY(0)
+            }
+
+            100% {
+                transform: translateY(-100vh)
+            }
+
+        }
+
+        /* CARD */
+
+        .card {
+
+            width: 380px;
+
+            padding: 45px;
+
+            background: rgba(255, 255, 255, 0.08);
+
+            backdrop-filter: blur(20px);
+
+            border-radius: 20px;
+
+            box-shadow:
+
+                0 10px 40px rgba(0, 0, 0, 0.5),
+
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+
+            color: white;
+
+            animation: fade 1s ease;
+
+        }
+
+        @keyframes fade {
+
+            from {
+                opacity: 0;
+                transform: translateY(30px)
+            }
+
+            to {
+                opacity: 1
+            }
+
+        }
+
+        .title {
+
+            text-align: center;
+
+            font-size: 26px;
+
+            font-weight: 600;
+
+            margin-bottom: 10px;
+
+        }
+
+        .subtitle {
+
+            text-align: center;
+
+            opacity: 0.7;
+
+            margin-bottom: 25px;
+
+            font-size: 14px;
+
+        }
+
+        /* INPUT */
+
+        .input-group {
+
+            margin-bottom: 18px;
+
+        }
+
+        input {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: rgba(255, 255, 255, 0.12);
+
+            color: white;
+
+            outline: none;
+
+            transition: 0.3s;
+
+        }
+
+        input:focus {
+
+            background: rgba(255, 255, 255, 0.2);
+
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+
+        }
+
+        /* BUTTON */
+
+        button {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: linear-gradient(135deg, #38bdf8, #6366f1);
+
+            color: white;
+
+            font-weight: 600;
+
+            font-size: 15px;
+
+            cursor: pointer;
+
+            transition: 0.3s;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 8px;
+
+        }
+
+        button:hover {
+
+            transform: translateY(-2px);
+
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.6);
+
+        }
+
+        /* SPINNER */
+
+        .spinner {
+
+            border: 3px solid rgba(255, 255, 255, 0.3);
+
+            border-top: 3px solid white;
+
+            border-radius: 50%;
+
+            width: 18px;
+            height: 18px;
+
+            animation: spin 1s linear infinite;
+
+            display: none;
+
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* ERROR SHAKE */
+
+        .shake {
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+
+            0% {
+                transform: translateX(0)
+            }
+
+            25% {
+                transform: translateX(-6px)
+            }
+
+            50% {
+                transform: translateX(6px)
+            }
+
+            75% {
+                transform: translateX(-6px)
+            }
+
+            100% {
+                transform: translateX(0)
+            }
+
+        }
+
+        /* MESSAGE */
+
+        #msg {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+
+        }
+
+        /* LINK */
+
+        .link {
+
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+
+        }
+
+        a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* MOBILE */
+
+        @media(max-width:500px) {
+
+            .card {
+                width: 90%;
+            }
+
+        }
+
+        input.error {
+            border: 2px solid #ef4444;
+        }
+
+        #msg {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            color: #f87171;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="card" id="card">
+
+        <div class="title">Welcome Trading</div>
+
+        <div class="subtitle">Login to your trading dashboard</div>
+
+        <div class="input-group">
+            <input id="username" placeholder="Username">
+        </div>
+
+        <div class="input-group">
+            <input id="password" type="password" placeholder="Password">
+        </div>
+
+        <button id="loginBtn" onclick="login()">
+
+            <span id="btnText">Login</span>
+
+            <div id="spinner" class="spinner"></div>
+
+        </button>
+
+        <div id="msg"></div>
+
+        <div class="link">
+
+            Don't have account?
+
+            <a href="register.html">Register</a>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        /* PARTICLES */
+
+        for (let i = 0; i < 70; i++) {
+
+            let p = document.createElement("div")
+
+            p.className = "particle"
+
+            p.style.left = Math.random() * 100 + "%"
+
+            p.style.animationDuration = (6 + Math.random() * 10) + "s"
+
+            p.style.opacity = Math.random()
+
+            document.body.appendChild(p)
+
+        }
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
