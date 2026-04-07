@@ -315,39 +315,32 @@
 
 <body>
 
-    <div class="card" id="card">
+    <form class="card" id="card" onsubmit="event.preventDefault(); login();">
 
         <div class="title">Welcome Trading</div>
-
         <div class="subtitle">Login to your trading dashboard</div>
 
         <div class="input-group">
-            <input id="username" placeholder="Username">
+            <input id="username" placeholder="Username" required>
         </div>
 
         <div class="input-group">
-            <input id="password" type="password" placeholder="Password">
+            <input id="password" type="password" placeholder="Password" required>
         </div>
 
-        <button id="loginBtn" onclick="login()">
-
+        <button id="loginBtn" type="submit">
             <span id="btnText">Login</span>
-
             <div id="spinner" class="spinner"></div>
-
         </button>
 
         <div id="msg"></div>
 
         <div class="link">
-
             Don't have account?
-
             <a href="register.html">Register</a>
-
         </div>
 
-    </div>
+    </form>
 
     <script>
 
@@ -369,6 +362,20 @@
 
         }
 
+        // ดักจับการกดปุ่ม Enter ในช่อง Password
+        document.getElementById("password").addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                login(); // เรียกใช้ฟังก์ชัน login ที่มีอยู่แล้วใน app.js
+            }
+        });
+
+        // หรือจะดักทั้งหน้า Card เลยก็ได้
+        document.getElementById("card").addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                login();
+            }
+        });
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
