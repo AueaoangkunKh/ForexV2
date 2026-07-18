@@ -630,3 +630,17 @@ document.addEventListener("DOMContentLoaded", () => {
     createParticles()
 
 })
+
+// ใส่โค้ดนี้เพิ่มเข้าไปในเหตุการณ์ DOMContentLoaded หรือในจุดตั้งค่าปุ่มของคุณ
+document.getElementById("noTradeBtn").onclick = async function() {
+    // 1. ตั้งค่าในช่อง Input ให้เป็น 0 อัตโนมัติ
+    document.getElementById("pnlInput").value = "0";
+    
+    // 2. เรียกฟังก์ชันบันทึกข้อมูลเดิมที่คุณมีอยู่แล้วเพื่อส่งค่าขึ้น Supabase
+    await saveTrade(); 
+    
+    // 3. แจ้งเตือนความสำเร็จนุ่มๆ ด้วยระบบ Toast ของคุณ
+    if (typeof showToast === "function") {
+        showToast("Recorded: No Trade Day 💤", "success");
+    }
+};
