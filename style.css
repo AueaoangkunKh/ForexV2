@@ -117,14 +117,15 @@ button:hover {
 /* CARD */
 
 .card {
-    background: #0f172a;
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    background: rgba(18, 24, 38, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
 }
 
 .card-header {
@@ -134,6 +135,15 @@ button:hover {
 
 .card-header h2 {
     font-size: 16px;
+}
+
+/* Summary Cards (KPI Metrics ด้านบน) */
+.kpi-card {
+    background: rgba(18, 24, 38, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
 }
 
 /* CHART */
@@ -197,6 +207,35 @@ canvas {
     gap: 8px;
 }
 
+/* แถวหัวข้อวัน */
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 10px;
+    opacity: 0.7;
+}
+
+.weekend-header {
+    color: #ef4444; /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
+}
+
+/* วันที่ถูกล็อก (เสาร์-อาทิตย์) */
+.day.disabled-day {
+    background: rgba(255, 255, 255, 0.03);
+    cursor: not-allowed;
+    opacity: 0.35;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.day.disabled-day:hover {
+    background: rgba(255, 255, 255, 0.03);
+    transform: none;
+}
+
 .day {
     background: #020617;
     border-radius: 8px;
@@ -207,6 +246,8 @@ canvas {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-height: 65px;
+    padding: 8px;
 }
 
 .day:hover {
@@ -221,6 +262,29 @@ canvas {
 .day-pnl {
     font-size: 13px;
     font-weight: 600;
+}
+
+/* กล่องแสดงข้อมูลในช่องวัน */
+.day-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+/* ยอดกำไร/ขาดทุน */
+.day-pnl {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* จำนวนออเดอร์ */
+.day-count {
+    font-size: 10px;
+    opacity: 0.65;
+    font-weight: 400;
 }
 
 .win {

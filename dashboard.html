@@ -125,13 +125,20 @@
             <div class="card calendar-card">
 
                 <div class="calendar-header">
-
                     <button onclick="prevMonth()">◀</button>
-
                     <h2 id="monthYear"></h2>
-
                     <button onclick="nextMonth()">▶</button>
+                </div>
 
+                <!-- เรียงใหม่: อาทิตย์ ขึ้นก่อน จันทร์ และปิดท้ายด้วย เสาร์ -->
+                <div class="calendar-weekdays">
+                    <div class="weekend-header">อาทิตย์</div>
+                    <div>จันทร์</div>
+                    <div>อังคาร</div>
+                    <div>พุธ</div>
+                    <div>พฤหัสบดี</div>
+                    <div>ศุกร์</div>
+                    <div class="weekend-header">เสาร์</div>
                 </div>
 
                 <div class="calendar" id="calendar"></div>
@@ -143,35 +150,22 @@
     </div>
 
     <!-- TRADE MODAL -->
-
     <div class="modal" id="tradeModal">
-
         <div class="modal-content">
-
             <h2>Add Trade</h2>
-
             <p id="modalDate"></p>
 
-            <input id="pnlInput" placeholder="PnL ($)">
-            
-            <div class="modal-buttons">
+            <input id="pnlInput" placeholder="PnL ($)" type="number" step="any">
+            <!-- เพิ่มช่องกรอกจำนวนออเดอร์ -->
+            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1"
+                style="margin-top: 10px;">
 
-                <button class="save" id="saveTrade">
-                    Save
-                </button>
-
-                <button class="delete" id="deleteTrade">
-                    Delete
-                </button>
-
-                <button class="cancel" onclick="closeModal()">
-                    Cancel
-                </button>
-
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button class="save" id="saveTrade">Save</button>
+                <button class="delete" id="deleteTrade">Delete</button>
+                <button class="cancel" onclick="closeModal()">Cancel</button>
             </div>
-
         </div>
-
     </div>
 
     <!-- DELETE CONFIRM -->
@@ -234,7 +228,7 @@
 
     </div>
 
-     <script  src="js/dashboard.js"></script>
+    <script src="js/dashboard.js"></script>
 
 </body>
 
