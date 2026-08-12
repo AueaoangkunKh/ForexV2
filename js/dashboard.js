@@ -95,7 +95,8 @@ async function renderCalendar() {
 
         if (tradeInfo) {
             const pnl = tradeInfo.pnl
-            const count = tradeInfo.count
+            // 🔹 เพิ่ม Math.abs() ตรงนี้ เพื่อป้องกันไม่ให้จำนวนออเดอร์เป็นค่าติดลบ (-1 trades)
+            const count = Math.abs(tradeInfo.count)
 
             box.innerHTML = `
                 <div class="day-number">${day}</div>
@@ -169,7 +170,7 @@ SAVE TRADE
 ====================== */
 async function saveTrade() {
     const pnl = parseFloat(document.getElementById("pnlInput").value)
-    const tradesCount = parseInt(document.getElementById("tradesCountInput").value) || 1
+    const tradesCount = Math.abs(parseInt(document.getElementById("tradesCountInput").value)) || 1
 
     if (isNaN(pnl)) {
         alert("Invalid PnL number")
@@ -293,6 +294,12 @@ async function loadTrades() {
         document.getElementById("winrate").innerText = "0%"
         document.getElementById("totalTrades").innerText = "0"
         document.getElementById("maxDD").innerText = "$0"
+
+        // รีเซ็ตค่า Analytics เป็น 0 เมื่อไม่มีข้อมูล
+        document.getElementById("profitFactor").innerText = "0.00"
+        document.getElementById("riskReward").innerText = "0.00"
+        document.getElementById("expectancy").innerText = "$0.00"
+        document.getElementById("strategyScore").innerText = "0.0"
         return
     }
 
@@ -301,7 +308,7 @@ async function loadTrades() {
     let pnlList = []
 
     let totalPnL = 0
-    let totalTradesCount = 0 // ตัวแปรเก็บจำนวนออเดอร์รวม
+    let totalTradesCount = 0
     let wins = 0
     let losses = 0
 
@@ -315,11 +322,11 @@ async function loadTrades() {
 
     data.forEach(t => {
         const pnl = Number(t.pnl)
-        const count = Number(t.trades_count || 1) // ดึงจำนวนออเดอร์ (ถ้าไม่มีให้เป็น 1)
+        const count = Number(t.trades_count || 1)
 
         pnlList.push(pnl)
         totalPnL += pnl
-        totalTradesCount += count // บวกสะสมจำนวนออเดอร์
+        totalTradesCount += count
 
         labels.push(t.date)
         equity.push(totalPnL)
@@ -341,10 +348,44 @@ async function loadTrades() {
 
     const winrate = (wins / data.length) * 100
 
+    // --- การคำนวณ ANALYTICS METRICS ---
+
+    // 1. Profit Factor = Gross Profit / Gross Loss
+    const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : grossProfit
+
+    // 2. Average Win / Average Loss
+    const avgWin = wins > 0 ? (grossProfit / wins) : 0
+    const avgLoss = losses > 0 ? (grossLoss / losses) : 0
+
+    // 3. Risk Reward Ratio = Average Win / Average Loss
+    const riskReward = avgLoss > 0 ? (avgWin / avgLoss) : avgWin
+
+    // 4. Expectancy = (Win Rate % * Avg Win) - (Loss Rate % * Avg Loss)
+    const winRateDec = wins / data.length
+    const lossRateDec = losses / data.length
+    const expectancy = (winRateDec * avgWin) - (lossRateDec * avgLoss)
+
+    // 5. Strategy Score (สูตรประเมินกลยุทธ์ 0-100)
+    // ให้น้ำหนักจาก Winrate, Profit Factor, และ Max Drawdown
+    let strategyScore = 0
+    if (data.length > 0) {
+        const pfScore = Math.min(profitFactor / 2, 1) * 40 // สูงสุด 40 คะแนน
+        const wrScore = (winrate / 100) * 40              // สูงสุด 40 คะแนน
+        const ddPenalty = peak > 0 ? Math.min(maxDD / peak, 1) * 20 : 0 // หักคะแนนตาม DD
+        strategyScore = Math.max(0, pfScore + wrScore + (20 - ddPenalty))
+    }
+
+    // --- อัปเดต UI ด้านบน ---
     document.getElementById("totalPnL").innerText = "$" + totalPnL.toFixed(2)
     document.getElementById("winrate").innerText = winrate.toFixed(1) + "%"
-    document.getElementById("totalTrades").innerText = totalTradesCount // แสดงจำนวนออเดอร์รวม
+    document.getElementById("totalTrades").innerText = totalTradesCount
     document.getElementById("maxDD").innerText = "$" + maxDD.toFixed(2)
+
+    // --- อัปเดต UI กล่อง ANALYTICS ---
+    document.getElementById("profitFactor").innerText = profitFactor.toFixed(2)
+    document.getElementById("riskReward").innerText = riskReward.toFixed(2)
+    document.getElementById("expectancy").innerText = (expectancy >= 0 ? "$" : "-$") + Math.abs(expectancy).toFixed(2)
+    document.getElementById("strategyScore").innerText = strategyScore.toFixed(1)
 
     drawEquity(labels, equity)
     drawWin(labels, pnlList)
@@ -352,80 +393,176 @@ async function loadTrades() {
 }
 
 /* ======================
-CHARTS
+CHARTS IMPROVED
 ====================== */
 
 function drawEquity(labels, data) {
+    if (equityChart) equityChart.destroy();
 
-    if (equityChart) equityChart.destroy()
+    const ctx = document.getElementById("equityChart").getContext("2d");
+    
+    // สร้าง Gradient เพิ่มความพรีเมียม
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, "rgba(34, 197, 94, 0.4)");
+    gradient.addColorStop(1, "rgba(34, 197, 94, 0.0)");
 
-    equityChart = new Chart(
-        document.getElementById("equityChart"),
-        {
-            type: "line",
-            data: {
-                labels,
-                datasets: [{
-                    label: "Equity",
-                    data,
-                    borderColor: "#22c55e",
-                    tension: 0.3
-                }]
+    equityChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Equity ($)",
+                data,
+                borderColor: "#22c55e",
+                borderWidth: 2.5,
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: "#22c55e",
+                pointRadius: data.length === 1 ? 5 : 3, // เพิ่มจุดถ้ามีเทรดเดียว
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: (ctx) => ` Equity: $${ctx.raw.toFixed(2)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    ticks: { color: "#94a3b8" }
+                },
+                y: {
+                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    ticks: {
+                        color: "#94a3b8",
+                        callback: (value) => "$" + value
+                    },
+                    // เริ่มต้นแกน Y จาก 0 เพื่อความสมดุล
+                    beginAtZero: true
+                }
             }
-        })
+        }
+    });
 }
 
 function drawWin(labels, pnlList) {
+    if (winChart) winChart.destroy();
 
-    if (winChart) winChart.destroy()
-
-    let wins = 0
-
-    let winrateData = []
+    let wins = 0;
+    let winrateData = [];
 
     pnlList.forEach((pnl, i) => {
+        if (pnl > 0) wins++;
+        winrateData.push(((wins / (i + 1)) * 100).toFixed(1));
+    });
 
-        if (pnl > 0) wins++
+    const ctx = document.getElementById("winChart").getContext("2d");
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, "rgba(56, 189, 248, 0.3)");
+    gradient.addColorStop(1, "rgba(56, 189, 248, 0.0)");
 
-        winrateData.push((wins / (i + 1)) * 100)
-
-    })
-
-    winChart = new Chart(
-        document.getElementById("winChart"),
-        {
-            type: "line",
-            data: {
-                labels,
-                datasets: [{
-                    label: "Winrate %",
-                    data: winrateData,
-                    borderColor: "#38bdf8",
-                    tension: 0.3
-                }]
+    winChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Winrate (%)",
+                data: winrateData,
+                borderColor: "#38bdf8",
+                borderWidth: 2.5,
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: "#38bdf8",
+                pointRadius: winrateData.length === 1 ? 5 : 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => ` Winrate: ${ctx.raw}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    ticks: { color: "#94a3b8" }
+                },
+                y: {
+                    min: 0,
+                    max: 100, // ล็อกสเกล Winrate 0 - 100% อ่านง่ายขึ้น
+                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    ticks: {
+                        color: "#94a3b8",
+                        callback: (value) => value + "%"
+                    }
+                }
             }
-        })
+        }
+    });
 }
 
 function drawPnL(labels, data) {
+    if (pnlChart) pnlChart.destroy();
 
-    if (pnlChart) pnlChart.destroy()
+    const ctx = document.getElementById("pnlChart").getContext("2d");
 
-    pnlChart = new Chart(
-        document.getElementById("pnlChart"),
-        {
-            type: "bar",
-            data: {
-                labels,
-                datasets: [{
-                    label: "PnL",
-                    data,
-                    backgroundColor: data.map(v =>
-                        v >= 0 ? "#22c55e" : "#ef4444"
-                    )
-                }]
+    pnlChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                label: "PnL ($)",
+                data,
+                backgroundColor: data.map(v => v >= 0 ? "rgba(34, 197, 94, 0.85)" : "rgba(239, 68, 68, 0.85)"),
+                borderColor: data.map(v => v >= 0 ? "#22c55e" : "#ef4444"),
+                borderWidth: 1,
+                borderRadius: 6, // ขอบแท่งมน
+                barThickness: data.length > 10 ? 'flex' : 40 // ปรับความกว้างแท่งไม่ให้บวมเกินไป
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => ` PnL: $${ctx.raw.toFixed(2)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: "#94a3b8" }
+                },
+                y: {
+                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    ticks: {
+                        color: "#94a3b8",
+                        callback: (value) => "$" + value
+                    }
+                }
             }
-        })
+        }
+    });
 }
 
 /* ======================
