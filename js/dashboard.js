@@ -43,7 +43,6 @@ CALENDAR
 async function renderCalendar() {
 
     const calendar = document.getElementById("calendar")
-
     calendar.innerHTML = ""
 
     const year = currentDate.getFullYear()
@@ -60,49 +59,68 @@ async function renderCalendar() {
         .select("*")
         .eq("user_id", user.id)
 
+    // เก็บทั้ง pnl และ trades_count แยกตามวันที่
     const tradeMap = {}
-
-    data.forEach(t => {
-
-        if (!tradeMap[t.date]) tradeMap[t.date] = 0
-
-        tradeMap[t.date] += Number(t.pnl)
-
-    })
-
-    for (let i = 0; i < firstDay; i++) {
-
-        calendar.appendChild(document.createElement("div"))
-
+    if (data) {
+        data.forEach(t => {
+            if (!tradeMap[t.date]) {
+                tradeMap[t.date] = { pnl: 0, count: 0 }
+            }
+            tradeMap[t.date].pnl += Number(t.pnl)
+            tradeMap[t.date].count += Number(t.trades_count || 1)
+        })
     }
 
+    // เติมช่องว่างด้านหน้า
+    for (let i = 0; i < firstDay; i++) {
+        calendar.appendChild(document.createElement("div"))
+    }
+
+    // วนลูปสร้างกล่องวันที่
     for (let day = 1; day <= daysInMonth; day++) {
+
+        const dateObj = new Date(year, month, day)
+        const dayOfWeek = dateObj.getDay()
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6)
 
         const dateStr =
             year + "-" +
             String(month + 1).padStart(2, "0") + "-" +
             String(day).padStart(2, "0")
 
-        const pnl = tradeMap[dateStr]
-
+        const tradeInfo = tradeMap[dateStr]
         const box = document.createElement("div")
 
         box.className = "day"
 
-        box.innerHTML = `
-        <div class="day-number">${day}</div>
-        <div class="day-pnl">${pnl ? (pnl > 0 ? "+" : "") + pnl : ""}</div>
-        `
+        if (tradeInfo) {
+            const pnl = tradeInfo.pnl
+            const count = tradeInfo.count
 
-        if (pnl > 0) box.classList.add("win")
-        if (pnl < 0) box.classList.add("loss")
+            box.innerHTML = `
+                <div class="day-number">${day}</div>
+                <div class="day-info">
+                    <div class="day-pnl">${(pnl > 0 ? "+" : "") + pnl.toFixed(2)}</div>
+                    <div class="day-count">${count} ${count > 1 ? 'trades' : 'trade'}</div>
+                </div>
+            `
 
-        box.onclick = () => openModal(dateStr)
+            if (pnl > 0) box.classList.add("win")
+            if (pnl < 0) box.classList.add("loss")
+        } else {
+            box.innerHTML = `<div class="day-number">${day}</div>`
+        }
+
+        // เช็คเสาร์-อาทิตย์
+        if (isWeekend) {
+            box.classList.add("disabled-day")
+            box.title = "Market Closed (Weekend)"
+        } else {
+            box.onclick = () => openModal(dateStr)
+        }
 
         calendar.appendChild(box)
-
     }
-
 }
 
 /* ======================
@@ -130,34 +148,32 @@ function closeModal() {
 /* ======================
 LOAD TRADE
 ====================== */
-
 async function loadTrade(date) {
-
     const { data } = await client
         .from("trades")
         .select("*")
         .eq("user_id", user.id)
         .eq("date", date)
 
-    document.getElementById("pnlInput").value =
-        data.length ? data[0].pnl : ""
-
+    if (data && data.length > 0) {
+        document.getElementById("pnlInput").value = data[0].pnl
+        document.getElementById("tradesCountInput").value = data[0].trades_count || 1
+    } else {
+        document.getElementById("pnlInput").value = ""
+        document.getElementById("tradesCountInput").value = "1"
+    }
 }
 
 /* ======================
 SAVE TRADE
 ====================== */
-
 async function saveTrade() {
-
     const pnl = parseFloat(document.getElementById("pnlInput").value)
+    const tradesCount = parseInt(document.getElementById("tradesCountInput").value) || 1
 
     if (isNaN(pnl)) {
-
-        alert("Invalid number")
-
+        alert("Invalid PnL number")
         return
-
     }
 
     const { data } = await client
@@ -166,32 +182,30 @@ async function saveTrade() {
         .eq("user_id", user.id)
         .eq("date", selectedDate)
 
-    if (data.length > 0) {
-
+    if (data && data.length > 0) {
         await client
             .from("trades")
-            .update({ pnl: pnl })
+            .update({
+                pnl: pnl,
+                trades_count: tradesCount
+            })
             .eq("user_id", user.id)
             .eq("date", selectedDate)
-
     } else {
-
         await client
             .from("trades")
             .insert([
                 {
                     user_id: user.id,
                     date: selectedDate,
-                    pnl: pnl
+                    pnl: pnl,
+                    trades_count: tradesCount
                 }
             ])
-
     }
 
     closeModal()
-
     await refreshDashboard()
-
 }
 
 /* ======================
@@ -267,9 +281,7 @@ function nextMonth() {
 /* ======================
 LOAD TRADES
 ====================== */
-
 async function loadTrades() {
-
     const { data } = await client
         .from("trades")
         .select("*")
@@ -277,17 +289,10 @@ async function loadTrades() {
         .order("date", { ascending: true })
 
     if (!data || data.length === 0) {
-
         document.getElementById("totalPnL").innerText = "$0"
         document.getElementById("winrate").innerText = "0%"
         document.getElementById("totalTrades").innerText = "0"
         document.getElementById("maxDD").innerText = "$0"
-
-        document.getElementById("profitFactor").innerText = "0"
-        document.getElementById("riskReward").innerText = "0"
-        document.getElementById("expectancy").innerText = "0"
-        document.getElementById("strategyScore").innerText = "0"
-
         return
     }
 
@@ -295,13 +300,13 @@ async function loadTrades() {
     let equity = []
     let pnlList = []
 
-    let total = 0
+    let totalPnL = 0
+    let totalTradesCount = 0 // ตัวแปรเก็บจำนวนออเดอร์รวม
     let wins = 0
     let losses = 0
 
     let grossProfit = 0
     let grossLoss = 0
-
     let winAmount = []
     let lossAmount = []
 
@@ -309,96 +314,41 @@ async function loadTrades() {
     let maxDD = 0
 
     data.forEach(t => {
-
         const pnl = Number(t.pnl)
+        const count = Number(t.trades_count || 1) // ดึงจำนวนออเดอร์ (ถ้าไม่มีให้เป็น 1)
 
         pnlList.push(pnl)
-
-        total += pnl
+        totalPnL += pnl
+        totalTradesCount += count // บวกสะสมจำนวนออเดอร์
 
         labels.push(t.date)
-
-        equity.push(total)
+        equity.push(totalPnL)
 
         if (pnl > 0) {
-
             wins++
-
             grossProfit += pnl
-
             winAmount.push(pnl)
-
         } else if (pnl < 0) {
-
             losses++
-
             grossLoss += Math.abs(pnl)
-
             lossAmount.push(Math.abs(pnl))
-
         }
 
-        if (total > peak) peak = total
-
-        const dd = peak - total
-
+        if (totalPnL > peak) peak = totalPnL
+        const dd = peak - totalPnL
         if (dd > maxDD) maxDD = dd
-
     })
 
     const winrate = (wins / data.length) * 100
 
-    const avgWin =
-        winAmount.length ?
-            winAmount.reduce((a, b) => a + b, 0) / winAmount.length : 0
-
-    const avgLoss =
-        lossAmount.length ?
-            lossAmount.reduce((a, b) => a + b, 0) / lossAmount.length : 0
-
-    const profitFactor =
-        grossLoss === 0 ? grossProfit : grossProfit / grossLoss
-
-    const riskReward =
-        avgLoss === 0 ? 0 : avgWin / avgLoss
-
-    const expectancy =
-        ((winrate / 100) * avgWin) -
-        ((1 - winrate / 100) * avgLoss)
-
-    const strategyScore =
-        ((winrate * profitFactor) / 10)
-
-    document.getElementById("totalPnL").innerText =
-        "$" + total.toFixed(2)
-
-    document.getElementById("winrate").innerText =
-        winrate.toFixed(1) + "%"
-
-    document.getElementById("totalTrades").innerText =
-        data.length
-
-    document.getElementById("maxDD").innerText =
-        "$" + maxDD.toFixed(2)
-
-    document.getElementById("profitFactor").innerText =
-        profitFactor.toFixed(2)
-
-    document.getElementById("riskReward").innerText =
-        riskReward.toFixed(2)
-
-    document.getElementById("expectancy").innerText =
-        expectancy.toFixed(2)
-
-    document.getElementById("strategyScore").innerText =
-        strategyScore.toFixed(1)
+    document.getElementById("totalPnL").innerText = "$" + totalPnL.toFixed(2)
+    document.getElementById("winrate").innerText = winrate.toFixed(1) + "%"
+    document.getElementById("totalTrades").innerText = totalTradesCount // แสดงจำนวนออเดอร์รวม
+    document.getElementById("maxDD").innerText = "$" + maxDD.toFixed(2)
 
     drawEquity(labels, equity)
-
     drawWin(labels, pnlList)
-
     drawPnL(labels, pnlList)
-
 }
 
 /* ======================
@@ -630,4 +580,3 @@ document.addEventListener("DOMContentLoaded", () => {
     createParticles()
 
 })
-
