@@ -146,6 +146,12 @@ button:hover {
     text-align: center;
 }
 
+/* กำหนดความสูงของพื้นที่กราฟให้เท่ากันและอ่านง่าย */
+.card canvas {
+    height: 240px !important;
+    width: 100% !important;
+}
+
 /* CHART */
 
 canvas {
