@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export default async function handler(req, res) {
     res.setHeader('Content-Type', 'application/json');
@@ -14,18 +14,15 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "กรุณากรอกข้อความข่าว" });
         }
 
-        // ดึง API Key
         const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key;
         if (!apiKey) {
-            return res.status(500).json({ 
-                error: "ไม่พบ GEMINI_API_KEY ใน Vercel Environment Variables" 
+            return res.status(500).json({
+                error: "ไม่พบ GEMINI_API_KEY ใน Vercel Environment Variables"
             });
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        
-        // 🟢 เปลี่ยนมาใช้ชื่อโมเดลมาตรฐานตัวนี้ครับ
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // 🟢 เรียกใช้ SDK ตัวใหม่
+        const ai = new GoogleGenAI({ apiKey });
 
         const systemPrompt = `
 คุณคือ AI นักวิเคราะห์ข่าวเศรษฐกิจและ Quantitative Trader ประจำห้องเทรด (เน้นสินทรัพย์ XAUUSD และ Forex/Crypto)
@@ -52,9 +49,13 @@ export default async function handler(req, res) {
 4. 💡 คำแนะนำด้านบริหารความเสี่ยง (Risk Management Note)
 `;
 
-        const prompt = `${systemPrompt}\n\nข้อมูลข่าวที่ต้องวิเคราะห์:\n${newsContent}`;
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
+        // 🟢 ใช้ Interactions API ร่วมกับโมเดล gemini-3.5-flash
+        const interaction = await ai.interactions.create({
+            model: "gemini-3.5-flash",
+            input: `${systemPrompt}\n\nข้อมูลข่าวที่ต้องวิเคราะห์:\n${newsContent}`
+        });
+
+        const responseText = interaction.output_text;
 
         return res.status(200).json({ result: responseText });
 
