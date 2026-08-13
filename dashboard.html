@@ -30,6 +30,11 @@
                 <div class="status-dot"></div>
                 <div class="status-text">LIVE</div>
 
+                <!-- ปุ่มสรุปข่าววันนี้ที่เพิ่มเข้ามา -->
+                <button class="news-btn" onclick="openNewsModal()">
+                    📰 สรุปข่าววันนี้
+                </button>
+
                 <button class="reset-btn" onclick="resetTrades()">
                     Reset
                 </button>
@@ -228,6 +233,33 @@
 
     </div>
 
+    <!-- AI NEWS SUMMARY MODAL -->
+    <div class="modal" id="newsModal">
+        <div class="modal-content news-modal-content">
+            <div class="news-modal-header">
+                <h2>🤖 AI สรุปข่าวและคาดการณ์ทิศทางตลาด</h2>
+                <button class="close-news-btn" onclick="closeNewsModal()">&times;</button>
+            </div>
+
+            <div class="news-input-section">
+                <textarea id="newsInput"
+                    placeholder="วางหัวข้อข่าว ตัวเลขเศรษฐกิจ หรือตาราง CPI/NFP ที่นี่..."></textarea>
+                <button id="analyzeBtn" onclick="analyzeNewsWithAI()">
+                    <span id="analyzeBtnText">⚡ วิเคราะห์ด้วย AI</span>
+                    <span id="analyzeLoader" style="display:none;">⏳ กำลังประมวลผล...</span>
+                </button>
+            </div>
+
+            <div class="news-result-container" id="newsResult">
+                <p class="news-placeholder">กรอกข้อมูลข่าวแล้วกด "วิเคราะห์ด้วย AI"
+                    เพื่อสร้างบทวิเคราะห์ฉากทัศน์และกลยุทธ์การเทรด</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- โหลดไลบรารี marked เพื่อแปลง Markdown เป็น HTML ตารางสวยงาม -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
     <script src="js/dashboard.js"></script>
 
 </body>

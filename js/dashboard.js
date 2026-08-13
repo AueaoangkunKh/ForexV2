@@ -717,3 +717,58 @@ document.addEventListener("DOMContentLoaded", () => {
     createParticles()
 
 })
+
+/* ======================
+AI NEWS MODAL
+====================== */
+
+function openNewsModal() {
+    document.getElementById("newsModal").style.display = "flex";
+}
+
+function closeNewsModal() {
+    document.getElementById("newsModal").style.display = "none";
+}
+
+async function analyzeNewsWithAI() {
+    const newsContent = document.getElementById("newsInput").value.trim();
+    const resultBox = document.getElementById("newsResult");
+    const btnText = document.getElementById("analyzeBtnText");
+    const loader = document.getElementById("analyzeLoader");
+
+    if (!newsContent) {
+        alert("กรุณากรอกข้อมูลข่าวหรือตัวเลขเศรษฐกิจากตารางก่อนครับ");
+        return;
+    }
+
+    btnText.style.display = "none";
+    loader.style.display = "inline";
+    resultBox.innerHTML = "<p class='news-placeholder'>⏳ AI กำลังวิเคราะห์ข้อมูลและสร้างตารางกลยุทธ์...</p>";
+
+    try {
+        const response = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newsContent })
+        });
+
+        // 🔹 เช็คว่า Response OK หรือไม่ก่อนแปลง JSON
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({ error: `HTTP Status ${response.status}` }));
+            throw new Error(errData.error || `Server responded with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.result) {
+            resultBox.innerHTML = marked.parse(data.result);
+        } else {
+            resultBox.innerHTML = "<p style='color:#ef4444;'>ไม่พบข้อมูลตอบกลับจาก AI</p>";
+        }
+    } catch (err) {
+        resultBox.innerHTML = `<p style='color:#ef4444; font-weight:bold;'>⚠️ เกิดข้อผิดพลาด: ${err.message}</p>`;
+    } finally {
+        btnText.style.display = "inline";
+        loader.style.display = "none";
+    }
+}
