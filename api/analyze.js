@@ -1,6 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
+const { GoogleGenAI } = require("@google/genai");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'application/json');
 
     if (req.method !== 'POST') {
@@ -21,7 +21,6 @@ export default async function handler(req, res) {
             });
         }
 
-        // 🟢 ส่ง apiKey ให้ SDK
         const ai = new GoogleGenAI({ apiKey });
 
         const systemPrompt = `
@@ -49,17 +48,15 @@ export default async function handler(req, res) {
 4. 💡 คำแนะนำด้านบริหารความเสี่ยง (Risk Management Note)
 `;
 
-        // 🟢 เรียกใช้ Interactions API ตรงตามรูปภาพ
         const interaction = await ai.interactions.create({
             model: "gemini-3.5-flash",
             input: `${systemPrompt}\n\nข้อมูลข่าวที่ต้องวิเคราะห์:\n${newsContent}`,
         });
 
-        // 🟢 ดึงผลลัพธ์ผ่าน output_text
         return res.status(200).json({ result: interaction.output_text });
 
     } catch (error) {
         console.error("Gemini API Error:", error);
         return res.status(500).json({ error: `AI Processing Error: ${error.message}` });
     }
-}
+};
