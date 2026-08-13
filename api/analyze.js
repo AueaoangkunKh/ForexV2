@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-    // กำหนดให้ตอบกลับเป็น JSON เสมอ
     res.setHeader('Content-Type', 'application/json');
 
     if (req.method !== 'POST') {
@@ -16,7 +15,7 @@ export default async function handler(req, res) {
         }
 
         // ดึง API Key
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key;
         if (!apiKey) {
             return res.status(500).json({ 
                 error: "ไม่พบ GEMINI_API_KEY ใน Vercel Environment Variables" 
@@ -24,8 +23,9 @@ export default async function handler(req, res) {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // 🔹 เปลี่ยนชื่อโมเดลเป็น gemini-2.5-flash เพื่อความเสถียร
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        
+        // 🟢 เปลี่ยนมาใช้ชื่อโมเดลมาตรฐานตัวนี้ครับ
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const systemPrompt = `
 คุณคือ AI นักวิเคราะห์ข่าวเศรษฐกิจและ Quantitative Trader ประจำห้องเทรด (เน้นสินทรัพย์ XAUUSD และ Forex/Crypto)
