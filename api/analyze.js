@@ -16,12 +16,12 @@ export default async function handler(req, res) {
 
         const apiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_Key;
         if (!apiKey) {
-            return res.status(500).json({
-                error: "ไม่พบ GEMINI_API_KEY ใน Vercel Environment Variables"
+            return res.status(500).json({ 
+                error: "ไม่พบ GEMINI_API_KEY ใน Vercel Environment Variables" 
             });
         }
 
-        // 🟢 เรียกใช้ SDK ตัวใหม่
+        // 🟢 ส่ง apiKey ให้ SDK
         const ai = new GoogleGenAI({ apiKey });
 
         const systemPrompt = `
@@ -49,15 +49,14 @@ export default async function handler(req, res) {
 4. 💡 คำแนะนำด้านบริหารความเสี่ยง (Risk Management Note)
 `;
 
-        // 🟢 ใช้ Interactions API ร่วมกับโมเดล gemini-3.5-flash
+        // 🟢 เรียกใช้ Interactions API ตรงตามรูปภาพ
         const interaction = await ai.interactions.create({
             model: "gemini-3.5-flash",
-            input: `${systemPrompt}\n\nข้อมูลข่าวที่ต้องวิเคราะห์:\n${newsContent}`
+            input: `${systemPrompt}\n\nข้อมูลข่าวที่ต้องวิเคราะห์:\n${newsContent}`,
         });
 
-        const responseText = interaction.output_text;
-
-        return res.status(200).json({ result: responseText });
+        // 🟢 ดึงผลลัพธ์ผ่าน output_text
+        return res.status(200).json({ result: interaction.output_text });
 
     } catch (error) {
         console.error("Gemini API Error:", error);
