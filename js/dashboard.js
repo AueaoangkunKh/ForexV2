@@ -523,41 +523,87 @@ function drawPnL(labels, data) {
 
     const ctx = document.getElementById("pnlChart").getContext("2d");
 
+    // สร้าง Gradient สำหรับแท่ง Win (เขียว) และ Loss (แดง)
+    const winGradient = ctx.createLinearGradient(0, 0, 0, 250);
+    winGradient.addColorStop(0, "rgba(34, 197, 94, 0.95)");
+    winGradient.addColorStop(1, "rgba(34, 197, 94, 0.2)");
+
+    const lossGradient = ctx.createLinearGradient(0, 0, 0, 250);
+    lossGradient.addColorStop(0, "rgba(239, 68, 68, 0.2)");
+    lossGradient.addColorStop(1, "rgba(239, 68, 68, 0.95)");
+
+    // แปลงรูปแบบวันที่จาก YYYY-MM-DD เป็น วันที่ + เดือนภาษาไทยย่อ (เช่น 3 ส.ค.)
+    const formattedLabels = labels.map(dateStr => {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            return dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        }
+        const d = new Date(dateStr);
+        return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+    });
+
     pnlChart = new Chart(ctx, {
         type: "bar",
         data: {
-            labels,
+            labels: formattedLabels,
             datasets: [{
                 label: "PnL ($)",
                 data,
-                backgroundColor: data.map(v => v >= 0 ? "rgba(34, 197, 94, 0.85)" : "rgba(239, 68, 68, 0.85)"),
+                backgroundColor: data.map(v => v >= 0 ? winGradient : lossGradient),
                 borderColor: data.map(v => v >= 0 ? "#22c55e" : "#ef4444"),
-                borderWidth: 1,
-                borderRadius: 6, // ขอบแท่งมน
-                barThickness: data.length > 10 ? 'flex' : 40 // ปรับความกว้างแท่งไม่ให้บวมเกินไป
+                borderWidth: 1.5,
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 38
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 20 // เพิ่มพื้นที่ด้านบนสำหรับแสดงตัวเลข
+                }
+            },
             plugins: {
                 legend: { display: false },
                 tooltip: {
+                    backgroundColor: "rgba(15, 23, 42, 0.95)",
+                    titleFont: { family: "Inter", size: 14, weight: "600" },
+                    bodyFont: { family: "JetBrains Mono", size: 15, weight: "700" },
+                    padding: 12,
+                    borderColor: "rgba(255, 255, 255, 0.15)",
+                    borderWidth: 1,
+                    displayColors: false,
                     callbacks: {
-                        label: (ctx) => ` PnL: $${ctx.raw.toFixed(2)}`
+                        label: (ctx) => {
+                            const val = ctx.raw;
+                            return val >= 0 ? ` PnL: +$${val.toFixed(2)}` : ` PnL: -$${Math.abs(val).toFixed(2)}`;
+                        }
                     }
                 }
             },
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { color: "#94a3b8" }
+                    ticks: {
+                        color: "#cbd5e1", // เพิ่มความสว่างตัวหนังสือ
+                        font: { family: "Inter", size: 13, weight: "600" }, // ขยายขนาดเป็น 13px และหนาขึ้น
+                        padding: 8
+                    }
                 },
                 y: {
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    grid: {
+                        color: (context) => context.tick.value === 0 ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.05)",
+                        lineWidth: (context) => context.tick.value === 0 ? 1.5 : 1
+                    },
                     ticks: {
-                        color: "#94a3b8",
-                        callback: (value) => "$" + value
+                        color: "#94a3b8", // เพิ่มความสว่างตัวหนังสือ
+                        font: { family: "JetBrains Mono", size: 13, weight: "500" }, // ขยายขนาดเป็น 13px
+                        padding: 8,
+                        callback: (value) => value >= 0 ? "$" + value : "-$" + Math.abs(value)
                     }
                 }
             }

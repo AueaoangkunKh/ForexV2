@@ -1,38 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* นำ JetBrains Mono มาใช้กับตัวเลขทางการเงินให้อ่านง่ายเป๊ะๆ */
+.stat-card p,
+.analytic-box h3,
+.day-pnl,
+.day-count,
+.modal-content input,
+#monthYear {
+    font-family: 'JetBrains Mono', monospace;
 }
 
 body {
-    background: #020617;
-    color: white;
+    background-color: #020617;
+    background-image:
+        radial-gradient(at 0% 0%, rgba(30, 41, 59, 0.4) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.6) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: #f8fafc;
     padding: 30px;
+    min-height: 100vh;
 }
 
 /* CONTAINER */
-
 .container {
     max-width: 1400px;
     margin: auto;
 }
 
 /* HEADER */
-
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    padding: 14px 24px;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 .logo {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 10px;
+    letter-spacing: -0.3px;
 }
 
 .header-right {
@@ -50,27 +72,44 @@ header {
 
 .status-text {
     font-size: 13px;
-    opacity: .7;
+    font-weight: 600;
+    opacity: 0.8;
+    letter-spacing: 0.5px;
 }
 
 /* BUTTON */
-
 button {
     border: none;
     cursor: pointer;
-    padding: 8px 14px;
-    border-radius: 8px;
+    padding: 9px 16px;
+    border-radius: 10px;
     font-size: 13px;
-    transition: 0.2s;
+    font-weight: 600;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .reset-btn {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.reset-btn:hover {
     background: #ef4444;
     color: white;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 }
 
 .logout-btn {
-    background: #334155;
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
     color: white;
 }
 
@@ -79,7 +118,6 @@ button:hover {
 }
 
 /* STATS */
-
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -88,26 +126,37 @@ button:hover {
 }
 
 .stat-card {
-    background: #0f172a;
-    padding: 20px;
-    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 22px 20px;
+    border-radius: 16px;
     text-align: center;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.5);
 }
 
 .stat-card h3 {
-    font-size: 14px;
-    opacity: .6;
-    margin-bottom: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.7;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
 }
 
 .stat-card p {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 /* MAIN GRID */
-
 .grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -115,33 +164,41 @@ button:hover {
 }
 
 /* CARD */
-
 .card {
-    background: rgba(18, 24, 38, 0.75);
+    background: rgba(15, 23, 42, 0.65);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 20px;
-    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 22px;
+    backdrop-filter: blur(12px);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.05);
 }
 
 .card-header {
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .card-header h2 {
     font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
 }
 
 /* Summary Cards (KPI Metrics ด้านบน) */
 .kpi-card {
     background: rgba(18, 24, 38, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 16px;
     text-align: center;
 }
@@ -153,7 +210,6 @@ button:hover {
 }
 
 /* CHART */
-
 canvas {
     width: 100% !important;
     max-width: 100%;
@@ -162,34 +218,41 @@ canvas {
 }
 
 /* ANALYTICS */
-
 .analytics {
     margin-top: 20px;
     width: 100%;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    gap: 12px;
 }
 
 .analytic-box {
-    background: #020617;
-    border-radius: 10px;
-    padding: 10px;
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px 10px;
     text-align: center;
+    transition: 0.2s;
+}
+
+.analytic-box:hover {
+    border-color: rgba(56, 189, 248, 0.3);
 }
 
 .analytic-box p {
-    font-size: 12px;
-    opacity: .6;
+    font-size: 11px;
+    opacity: 0.7;
+    font-weight: 500;
 }
 
 .analytic-box h3 {
-    margin-top: 4px;
+    margin-top: 6px;
     font-size: 16px;
+    color: #38bdf8;
+    font-weight: 700;
 }
 
 /* CALENDAR */
-
 .calendar-card {
     align-items: stretch;
 }
@@ -198,13 +261,19 @@ canvas {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .calendar-header button {
-    background: #1e293b;
+    background: rgba(255, 255, 255, 0.06);
     color: white;
-    padding: 6px 12px;
+    padding: 6px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.calendar-header button:hover {
+    background: rgba(255, 255, 255, 0.18);
 }
 
 .calendar {
@@ -221,53 +290,51 @@ canvas {
     text-align: center;
     font-weight: 600;
     font-size: 13px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     opacity: 0.7;
 }
 
 .weekend-header {
-    color: #ef4444; /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
+    color: #ef4444;
+    /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
 }
 
 /* วันที่ถูกล็อก (เสาร์-อาทิตย์) */
 .day.disabled-day {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     cursor: not-allowed;
-    opacity: 0.35;
-    border: 1px dashed rgba(255, 255, 255, 0.1);
+    opacity: 0.3;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 .day.disabled-day:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     transform: none;
 }
 
 .day {
-    background: #020617;
-    border-radius: 8px;
-    padding: 10px;
-    min-height: 60px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px 8px;
+    min-height: 65px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 65px;
-    padding: 8px;
 }
 
-.day:hover {
+.day:hover:not(.disabled-day) {
     background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.04);
 }
 
 .day-number {
     font-size: 12px;
-    opacity: .7;
-}
-
-.day-pnl {
-    font-size: 13px;
-    font-weight: 600;
+    opacity: 0.7;
+    font-weight: 500;
 }
 
 /* กล่องแสดงข้อมูลในช่องวัน */
@@ -289,27 +356,37 @@ canvas {
 /* จำนวนออเดอร์ */
 .day-count {
     font-size: 10px;
-    opacity: 0.65;
+    opacity: 0.7;
     font-weight: 400;
 }
 
 .win {
     background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.win .day-pnl {
+    color: #4ade80;
 }
 
 .loss {
     background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.loss .day-pnl {
+    color: #f87171;
 }
 
 /* MODAL */
-
 .modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -318,29 +395,41 @@ canvas {
 
 .modal-content {
     background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 30px;
-    border-radius: 14px;
-    width: 300px;
+    border-radius: 16px;
+    width: 320px;
     text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    animation: popup 0.25s ease;
 }
 
 .modal-content h2 {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    font-size: 18px;
 }
 
 .modal-content p {
-    opacity: .7;
-    margin-bottom: 15px;
+    opacity: 0.7;
+    margin-bottom: 16px;
+    font-size: 13px;
 }
 
 .modal-content input {
     width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     background: #020617;
     color: white;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    outline: none;
+    transition: 0.2s;
+}
+
+.modal-content input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
 }
 
 .modal-buttons {
@@ -358,9 +447,17 @@ canvas {
     color: white;
 }
 
+.save:hover {
+    background: #16a34a;
+}
+
 .delete {
     background: #ef4444;
     color: white;
+}
+
+.delete:hover {
+    background: #dc2626;
 }
 
 .cancel {
@@ -368,23 +465,38 @@ canvas {
     color: white;
 }
 
-/* TOAST */
+.cancel:hover {
+    background: #475569;
+}
 
+/* TOAST */
 .toast {
     position: fixed;
-    bottom: 25px;
+    bottom: -100px;
     right: 25px;
     background: #0f172a;
-    padding: 12px 18px;
-    border-radius: 10px;
-    display: none;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 14px 22px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+
+.toast.show {
+    bottom: 30px;
+}
+
+.toast.success {
+    border-left: 4px solid #22c55e;
+}
+
+.toast.error {
+    border-left: 4px solid #ef4444;
 }
 
 /* RESPONSIVE */
-
 @media(max-width:1100px) {
-
     .grid {
         grid-template-columns: 1fr;
     }
@@ -396,10 +508,12 @@ canvas {
     .analytics {
         grid-template-columns: repeat(2, 1fr);
     }
-
 }
 
 @media(max-width:600px) {
+    body {
+        padding: 15px;
+    }
 
     .stats-grid {
         grid-template-columns: 1fr;
@@ -410,14 +524,12 @@ canvas {
     }
 
     .day {
-        min-height: 50px;
+        min-height: 55px;
         padding: 6px;
     }
-
 }
 
 /* LIVE PULSE */
-
 .live-indicator {
     display: flex;
     align-items: center;
@@ -430,43 +542,20 @@ canvas {
 
 @keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, .6)
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, .6);
     }
 
     70% {
-        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0)
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0)
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
     }
 }
 
-/* CARD HOVER */
-
-.card {
-    transition: .3s;
-}
-
-.card:hover {
-
-    transform: translateY(-5px);
-
-    box-shadow:
-        0 20px 60px rgba(0, 0, 0, .6),
-        0 0 15px rgba(34, 197, 94, .1);
-
-}
-
 /* BUTTON RIPPLE */
-
-button {
-    position: relative;
-    overflow: hidden;
-}
-
 button:active::after {
-
     content: "";
     position: absolute;
     width: 200px;
@@ -482,21 +571,16 @@ button:active::after {
 @keyframes ripple {
     from {
         opacity: .6;
-        transform: scale(0)
+        transform: scale(0);
     }
 
     to {
         opacity: 0;
-        transform: scale(3)
+        transform: scale(3);
     }
 }
 
 /* MODAL ANIMATION */
-
-.modal-content {
-    animation: popup .25s ease;
-}
-
 @keyframes popup {
     from {
         transform: scale(.8);
@@ -509,50 +593,12 @@ button:active::after {
     }
 }
 
-/* TOAST */
-
-.toast {
-
-    position: fixed;
-
-    bottom: -100px;
-
-    right: 25px;
-
-    background: #0f172a;
-
-    padding: 14px 22px;
-
-    border-radius: 12px;
-
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
-
-    transition: .4s;
-
-}
-
-.toast.show {
-
-    bottom: 30px;
-
-}
-
-/* DAY HOVER */
-
-.day:hover {
-
-    transform: scale(1.05);
-
-}
-
 /* STAT NUMBER */
-
 .stat-card p {
     transition: .3s;
 }
 
-/* ULTRA EFFECT */
-
+/* ULTRA EFFECT PARTICLES */
 .particle {
     position: fixed;
     width: 4px;
@@ -562,10 +608,10 @@ button:active::after {
     opacity: .25;
     pointer-events: none;
     animation: float linear infinite;
+    z-index: 0;
 }
 
 @keyframes float {
-
     from {
         transform: translateY(100vh);
     }
@@ -573,35 +619,110 @@ button:active::after {
     to {
         transform: translateY(-10vh);
     }
-
 }
 
 .flash {
-
     animation: flash .6s;
-
 }
 
 @keyframes flash {
-
     0% {
-        background: #020617
+        background: #020617;
     }
 
     50% {
-        background: #22c55e22
+        background: rgba(34, 197, 94, 0.13);
     }
 
     100% {
-        background: #020617
+        background: #020617;
+    }
+}
+
+/* =========================================
+   RESPONSIVE BREAKPOINTS (MOBILE & TABLET)
+========================================= */
+
+@media(max-width: 1100px) {
+    .grid {
+        grid-template-columns: 1fr;
     }
 
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-.toast.success {
-    border-left: 4px solid #22c55e;
-}
+@media(max-width: 600px) {
+    body {
+        padding: 12px;
+    }
 
-.toast.error {
-    border-left: 4px solid #ef4444;
+    header {
+        padding: 10px 14px;
+        margin-bottom: 14px;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 12px 10px;
+    }
+
+    .stat-card h3 {
+        font-size: 11px;
+    }
+
+    .stat-card p {
+        font-size: 16px;
+    }
+
+    .analytics {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .calendar-weekdays {
+        font-size: 10px;
+        gap: 3px;
+    }
+
+    /* ปรับย่อชื่อวันในปฏิทินสำหรับจอมือถือ */
+    .calendar-weekdays div {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .calendar {
+        gap: 3px;
+    }
+
+    .day {
+        min-height: 48px;
+        padding: 4px 2px;
+        border-radius: 6px;
+    }
+
+    .day-number {
+        font-size: 10px;
+    }
+
+    .day-pnl {
+        font-size: 9px;
+    }
+
+    .day-count {
+        font-size: 8px;
+        display: none;
+    }
+
+    /* ซ่อนจำนวนเทรดบนจอมือถือเล็กๆ เพื่อความคลีน */
 }
