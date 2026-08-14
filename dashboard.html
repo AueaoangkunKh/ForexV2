@@ -2,17 +2,15 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
+    <!-- ปรับ viewport ให้รองรับ responsive บนมือถือเต็มรูปแบบ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Trading Dashboard</title>
 
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="Logo1.png">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 </head>
 
 <body>
@@ -20,13 +18,11 @@
     <div class="container">
 
         <header>
-
             <div class="logo">
                 📊 <span>Trading Journal</span>
             </div>
 
             <div class="header-right">
-
                 <div class="status-dot"></div>
                 <div class="status-text">LIVE</div>
 
@@ -37,13 +33,11 @@
                 <button class="logout-btn" onclick="logout()">
                     Logout
                 </button>
-
             </div>
-
         </header>
 
+        <!-- STATS GRID -->
         <div class="stats-grid">
-
             <div class="stat-card">
                 <h3>Total PnL</h3>
                 <p id="totalPnL">$0</p>
@@ -63,21 +57,22 @@
                 <h3>Max Drawdown</h3>
                 <p id="maxDD">$0</p>
             </div>
-
         </div>
 
+        <!-- MAIN GRID -->
         <div class="grid">
 
+            <!-- EQUITY CURVE & ANALYTICS -->
             <div class="card">
-
                 <div class="card-header">
                     <h2>📈 Equity Curve</h2>
                 </div>
 
-                <canvas id="equityChart"></canvas>
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="equityChart"></canvas>
+                </div>
 
                 <div class="analytics">
-
                     <div class="analytic-box">
                         <p>Profit Factor</p>
                         <h3 id="profitFactor">0</h3>
@@ -97,52 +92,65 @@
                         <p>Strategy Score</p>
                         <h3 id="strategyScore">0</h3>
                     </div>
-
                 </div>
-
             </div>
 
+            <!-- WINRATE CHART -->
             <div class="card">
-
                 <div class="card-header">
                     <h2>📊 Winrate Chart</h2>
                 </div>
-
                 <canvas id="winChart"></canvas>
-
             </div>
 
+            <!-- PNL DISTRIBUTION -->
             <div class="card">
-
                 <div class="card-header">
                     <h2>📉 PnL Distribution</h2>
                 </div>
-
                 <canvas id="pnlChart"></canvas>
-
             </div>
 
+            <!-- CALENDAR & LIST VIEW CARD -->
             <div class="card calendar-card">
-
                 <div class="calendar-header">
-                    <button onclick="prevMonth()">◀</button>
-                    <h2 id="monthYear"></h2>
-                    <button onclick="nextMonth()">▶</button>
+                    <div class="month-nav">
+                        <button onclick="prevMonth()">◀</button>
+                        <h2 id="monthYear"></h2>
+                        <button onclick="nextMonth()">▶</button>
+                    </div>
+
+                    <!-- เพิ่มปุ่ม Toggle สลับ Calendar / List -->
+                    <div class="view-toggle">
+                        <button id="btnCalendarView" class="toggle-btn active" onclick="switchView('calendar')">📅 Calendar</button>
+                        <button id="btnListView" class="toggle-btn" onclick="switchView('list')">📋 List</button>
+                    </div>
                 </div>
 
-                <!-- เรียงใหม่: อาทิตย์ ขึ้นก่อน จันทร์ และปิดท้ายด้วย เสาร์ -->
-                <div class="calendar-weekdays">
-                    <div class="weekend-header">อา.</div>
-                    <div>จ.</div>
-                    <div>อ.</div>
-                    <div>พ.</div>
-                    <div>พฤ.</div>
-                    <div>ศ.</div>
-                    <div class="weekend-header">ส.</div>
+                <!-- CALENDAR VIEW -->
+                <div id="calendarContainer">
+                    <div class="calendar-weekdays">
+                        <div class="weekend-header">อา.</div>
+                        <div>จ.</div>
+                        <div>อ.</div>
+                        <div>พ.</div>
+                        <div>พฤ.</div>
+                        <div>ศ.</div>
+                        <div class="weekend-header">ส.</div>
+                    </div>
+
+                    <div class="calendar" id="calendar"></div>
                 </div>
 
-                <div class="calendar" id="calendar"></div>
-
+                <!-- LIST VIEW (ซ่อนไว้เริ่มต้น) -->
+                <div id="listContainer" style="display: none;">
+                    <div class="trade-list-header">
+                        <span>วันที่</span>
+                        <span>PnL ($)</span>
+                        <span>สถานะ</span>
+                    </div>
+                    <div id="tradeList" class="trade-list"></div>
+                </div>
             </div>
 
         </div>
@@ -156,9 +164,7 @@
             <p id="modalDate"></p>
 
             <input id="pnlInput" placeholder="PnL ($)" type="number" step="any">
-            <!-- เพิ่มช่องกรอกจำนวนออเดอร์ -->
-            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1"
-                style="margin-top: 10px;">
+            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1" style="margin-top: 10px;">
 
             <div class="modal-buttons" style="margin-top: 15px;">
                 <button class="save" id="saveTrade">Save</button>
@@ -169,63 +175,34 @@
     </div>
 
     <!-- DELETE CONFIRM -->
-
     <div class="modal" id="confirmModal">
-
         <div class="modal-content">
-
             <h2>Delete Trade</h2>
-
             <p>Are you sure?</p>
 
             <div class="modal-buttons">
-
-                <button class="delete" id="confirmDeleteBtn">
-                    Delete
-                </button>
-
-                <button class="cancel" id="cancelDeleteBtn">
-                    Cancel
-                </button>
-
+                <button class="delete" id="confirmDeleteBtn">Delete</button>
+                <button class="cancel" id="cancelDeleteBtn">Cancel</button>
             </div>
-
         </div>
-
     </div>
 
     <!-- RESET CONFIRM -->
-
     <div class="modal" id="resetModal">
-
         <div class="modal-content">
-
             <h2>Reset All Trades</h2>
-
             <p>This will delete all trades</p>
 
             <div class="modal-buttons">
-
-                <button class="delete" id="confirmResetBtn">
-                    Reset
-                </button>
-
-                <button class="cancel" id="cancelResetBtn">
-                    Cancel
-                </button>
-
+                <button class="delete" id="confirmResetBtn">Reset</button>
+                <button class="cancel" id="cancelResetBtn">Cancel</button>
             </div>
-
         </div>
-
     </div>
 
     <!-- TOAST -->
-
     <div class="toast" id="toast">
-
         <span id="toastText"></span>
-
     </div>
 
     <script src="js/dashboard.js"></script>

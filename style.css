@@ -13,7 +13,8 @@
 .day-pnl,
 .day-count,
 .modal-content input,
-#monthYear {
+#monthYear,
+.trade-item {
     font-family: 'JetBrains Mono', monospace;
 }
 
@@ -154,6 +155,7 @@ button:hover {
     font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.5px;
+    transition: .3s;
 }
 
 /* MAIN GRID */
@@ -203,13 +205,12 @@ button:hover {
     text-align: center;
 }
 
-/* กำหนดความสูงของพื้นที่กราฟให้เท่ากันและอ่านง่าย */
+/* CHART */
 .card canvas {
     height: 240px !important;
     width: 100% !important;
 }
 
-/* CHART */
 canvas {
     width: 100% !important;
     max-width: 100%;
@@ -252,7 +253,7 @@ canvas {
     font-weight: 700;
 }
 
-/* CALENDAR */
+/* CALENDAR & LIST HEADER ENHANCEMENTS */
 .calendar-card {
     align-items: stretch;
 }
@@ -262,6 +263,14 @@ canvas {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.month-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .calendar-header button {
@@ -276,13 +285,42 @@ canvas {
     background: rgba(255, 255, 255, 0.18);
 }
 
+/* VIEW TOGGLE BUTTONS (CALENDAR VS LIST) */
+.view-toggle {
+    display: flex;
+    background: rgba(2, 6, 23, 0.6);
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.toggle-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    background: transparent;
+    color: #94a3b8;
+    border-radius: 8px;
+    border: none;
+}
+
+.toggle-btn.active {
+    background: #38bdf8;
+    color: #020617;
+    font-weight: 700;
+}
+
+.toggle-btn:hover:not(.active) {
+    color: #f8fafc;
+    transform: none;
+}
+
+/* CALENDAR GRID */
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 8px;
 }
 
-/* แถวหัวข้อวัน */
 .calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -295,11 +333,9 @@ canvas {
 }
 
 .weekend-header {
-    color: #ef4444;
-    /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
+    color: #ef4444; /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
 }
 
-/* วันที่ถูกล็อก (เสาร์-อาทิตย์) */
 .day.disabled-day {
     background: rgba(255, 255, 255, 0.02);
     cursor: not-allowed;
@@ -337,7 +373,6 @@ canvas {
     font-weight: 500;
 }
 
-/* กล่องแสดงข้อมูลในช่องวัน */
 .day-info {
     display: flex;
     flex-direction: column;
@@ -346,14 +381,12 @@ canvas {
     margin-top: 4px;
 }
 
-/* ยอดกำไร/ขาดทุน */
 .day-pnl {
     font-size: 13px;
     font-weight: 600;
     line-height: 1.2;
 }
 
-/* จำนวนออเดอร์ */
 .day-count {
     font-size: 10px;
     opacity: 0.7;
@@ -377,6 +410,47 @@ canvas {
 .loss .day-pnl {
     color: #f87171;
 }
+
+/* TRADE LIST VIEW */
+.trade-list-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.7;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.trade-list {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    padding-right: 4px;
+}
+
+.trade-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 12px 14px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    font-size: 13px;
+    align-items: center;
+}
+
+.trade-item.win-item { 
+    border-left: 3px solid #22c55e; 
+}
+
+.trade-item.loss-item { 
+    border-left: 3px solid #ef4444; 
+}
+
 
 /* MODAL */
 .modal {
@@ -495,40 +569,6 @@ canvas {
     border-left: 4px solid #ef4444;
 }
 
-/* RESPONSIVE */
-@media(max-width:1100px) {
-    .grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .analytics {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media(max-width:600px) {
-    body {
-        padding: 15px;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .calendar {
-        gap: 5px;
-    }
-
-    .day {
-        min-height: 55px;
-        padding: 6px;
-    }
-}
-
 /* LIVE PULSE */
 .live-indicator {
     display: flex;
@@ -593,11 +633,6 @@ button:active::after {
     }
 }
 
-/* STAT NUMBER */
-.stat-card p {
-    transition: .3s;
-}
-
 /* ULTRA EFFECT PARTICLES */
 .particle {
     position: fixed;
@@ -651,6 +686,10 @@ button:active::after {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .analytics {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media(max-width: 600px) {
@@ -694,7 +733,6 @@ button:active::after {
         gap: 3px;
     }
 
-    /* ปรับย่อชื่อวันในปฏิทินสำหรับจอมือถือ */
     .calendar-weekdays div {
         overflow: hidden;
         text-overflow: ellipsis;
@@ -721,8 +759,7 @@ button:active::after {
 
     .day-count {
         font-size: 8px;
-        display: none;
+        display: none; /* ซ่อนจำนวนเทรดบนจอมือถือเล็กๆ เพื่อความคลีน */
     }
 
-    /* ซ่อนจำนวนเทรดบนจอมือถือเล็กๆ เพื่อความคลีน */
 }

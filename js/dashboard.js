@@ -14,7 +14,7 @@ if (!user) {
 }
 
 /* ======================
-GLOBAL
+GLOBAL VARIABLES
 ====================== */
 
 let equityChart = null
@@ -23,17 +23,80 @@ let pnlChart = null
 
 let currentDate = new Date()
 let selectedDate = null
+let currentTradesData = [] // เก็บข้อมูล CacheTrades ไว้ใช้งานใน List View
 
 /* ======================
 LOGOUT
 ====================== */
 
 function logout() {
-
     localStorage.removeItem("user")
-
     window.location = "login.html"
+}
 
+/* ======================
+VIEW SWITCHER (UX/UI ENHANCEMENT)
+====================== */
+
+function switchView(viewType) {
+    const calendarCont = document.getElementById("calendarContainer")
+    const listCont = document.getElementById("listContainer")
+    const btnCal = document.getElementById("btnCalendarView")
+    const btnList = document.getElementById("btnListView")
+
+    if (!calendarCont || !listCont) return
+
+    if (viewType === "calendar") {
+        calendarCont.style.display = "block"
+        listCont.style.display = "none"
+        if (btnCal) btnCal.classList.add("active")
+        if (btnList) btnList.classList.remove("active")
+    } else {
+        calendarCont.style.display = "none"
+        listCont.style.display = "block"
+        if (btnList) btnList.classList.add("active")
+        if (btnCal) btnCal.classList.remove("active")
+        renderListView()
+    }
+}
+
+/* ======================
+RENDER LIST VIEW
+====================== */
+
+function renderListView() {
+    const tradeList = document.getElementById("tradeList")
+    if (!tradeList) return
+
+    tradeList.innerHTML = ""
+
+    if (!currentTradesData || currentTradesData.length === 0) {
+        tradeList.innerHTML = `<div style="text-align:center; padding: 20px; opacity:0.5; font-size:12px;">No trade records found</div>`
+        return
+    }
+
+    // เรียงวันที่จากล่าสุดไปเก่าสุด
+    const sortedData = [...currentTradesData].sort((a, b) => new Date(b.date) - new Date(a.date))
+
+    sortedData.forEach(trade => {
+        const pnl = Number(trade.pnl)
+        const isWin = pnl >= 0
+        const item = document.createElement("div")
+        item.className = `trade-item ${isWin ? "win-item" : "loss-item"}`
+        item.style.cursor = "pointer"
+        item.onclick = () => openModal(trade.date)
+
+        item.innerHTML = `
+            <span>${trade.date}</span>
+            <span style="font-weight:700; color: ${isWin ? '#4ade80' : '#f87171'}">
+                ${isWin ? '+' : ''}$${pnl.toFixed(2)}
+            </span>
+            <span style="font-size:11px; opacity:0.8;">
+                ${trade.trades_count || 1} ${trade.trades_count > 1 ? 'trades' : 'trade'}
+            </span>
+        `
+        tradeList.appendChild(item)
+    })
 }
 
 /* ======================
@@ -41,8 +104,8 @@ CALENDAR
 ====================== */
 
 async function renderCalendar() {
-
     const calendar = document.getElementById("calendar")
+    if (!calendar) return
     calendar.innerHTML = ""
 
     const year = currentDate.getFullYear()
@@ -59,7 +122,6 @@ async function renderCalendar() {
         .select("*")
         .eq("user_id", user.id)
 
-    // เก็บทั้ง pnl และ trades_count แยกตามวันที่
     const tradeMap = {}
     if (data) {
         data.forEach(t => {
@@ -78,7 +140,6 @@ async function renderCalendar() {
 
     // วนลูปสร้างกล่องวันที่
     for (let day = 1; day <= daysInMonth; day++) {
-
         const dateObj = new Date(year, month, day)
         const dayOfWeek = dateObj.getDay()
         const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6)
@@ -95,7 +156,6 @@ async function renderCalendar() {
 
         if (tradeInfo) {
             const pnl = tradeInfo.pnl
-            // 🔹 เพิ่ม Math.abs() ตรงนี้ เพื่อป้องกันไม่ให้จำนวนออเดอร์เป็นค่าติดลบ (-1 trades)
             const count = Math.abs(tradeInfo.count)
 
             box.innerHTML = `
@@ -112,7 +172,6 @@ async function renderCalendar() {
             box.innerHTML = `<div class="day-number">${day}</div>`
         }
 
-        // เช็คเสาร์-อาทิตย์
         if (isWeekend) {
             box.classList.add("disabled-day")
             box.title = "Market Closed (Weekend)"
@@ -129,26 +188,20 @@ MODAL
 ====================== */
 
 function openModal(date) {
-
     selectedDate = date
-
     document.getElementById("modalDate").innerText = date
-
     document.getElementById("tradeModal").style.display = "flex"
-
     loadTrade(date)
-
 }
 
 function closeModal() {
-
     document.getElementById("tradeModal").style.display = "none"
-
 }
 
 /* ======================
 LOAD TRADE
 ====================== */
+
 async function loadTrade(date) {
     const { data } = await client
         .from("trades")
@@ -168,12 +221,14 @@ async function loadTrade(date) {
 /* ======================
 SAVE TRADE
 ====================== */
+
 async function saveTrade() {
-    const pnl = parseFloat(document.getElementById("pnlInput").value)
+    const pnlInputVal = document.getElementById("pnlInput").value
+    const pnl = parseFloat(pnlInputVal)
     const tradesCount = Math.abs(parseInt(document.getElementById("tradesCountInput").value)) || 1
 
-    if (isNaN(pnl)) {
-        alert("Invalid PnL number")
+    if (isNaN(pnl) || pnlInputVal.trim() === "") {
+        showToast("Invalid PnL number", "error")
         return
     }
 
@@ -206,6 +261,7 @@ async function saveTrade() {
     }
 
     closeModal()
+    showToast("Trade Saved 📈", "success")
     await refreshDashboard()
 }
 
@@ -214,13 +270,10 @@ DELETE TRADE
 ====================== */
 
 function showDeleteConfirm() {
-
     document.getElementById("confirmModal").style.display = "flex"
-
 }
 
 async function deleteTrade() {
-
     if (!selectedDate) return
 
     await client
@@ -230,10 +283,9 @@ async function deleteTrade() {
         .eq("date", selectedDate)
 
     document.getElementById("confirmModal").style.display = "none"
-
     closeModal()
-
-    location.reload()
+    showToast("Trade Deleted", "error")
+    await refreshDashboard()
 }
 
 /* ======================
@@ -241,12 +293,12 @@ RESET
 ====================== */
 
 function resetTrades() {
-
     document.getElementById("resetModal").style.display = "flex"
-
 }
 
 async function confirmReset() {
+    document.body.classList.add("flash")
+    showToast("Resetting all trades...", "error")
 
     await client
         .from("trades")
@@ -254,9 +306,7 @@ async function confirmReset() {
         .eq("user_id", user.id)
 
     document.getElementById("resetModal").style.display = "none"
-
-    location.reload()
-
+    await refreshDashboard()
 }
 
 /* ======================
@@ -264,24 +314,19 @@ MONTH NAVIGATION
 ====================== */
 
 function prevMonth() {
-
     currentDate.setMonth(currentDate.getMonth() - 1)
-
     renderCalendar()
-
 }
 
 function nextMonth() {
-
     currentDate.setMonth(currentDate.getMonth() + 1)
-
     renderCalendar()
-
 }
 
 /* ======================
-LOAD TRADES
+LOAD TRADES & METRICS
 ====================== */
+
 async function loadTrades() {
     const { data } = await client
         .from("trades")
@@ -289,17 +334,26 @@ async function loadTrades() {
         .eq("user_id", user.id)
         .order("date", { ascending: true })
 
+    currentTradesData = data || []
+
     if (!data || data.length === 0) {
-        document.getElementById("totalPnL").innerText = "$0"
+        document.getElementById("totalPnL").innerText = "$0.00"
         document.getElementById("winrate").innerText = "0%"
         document.getElementById("totalTrades").innerText = "0"
-        document.getElementById("maxDD").innerText = "$0"
+        document.getElementById("maxDD").innerText = "$0.00"
 
-        // รีเซ็ตค่า Analytics เป็น 0 เมื่อไม่มีข้อมูล
         document.getElementById("profitFactor").innerText = "0.00"
         document.getElementById("riskReward").innerText = "0.00"
         document.getElementById("expectancy").innerText = "$0.00"
         document.getElementById("strategyScore").innerText = "0.0"
+
+        drawEquity([], [])
+        drawWin([], [])
+        drawPnL([], [])
+
+        if (document.getElementById("listContainer") && document.getElementById("listContainer").style.display !== "none") {
+            renderListView()
+        }
         return
     }
 
@@ -314,8 +368,6 @@ async function loadTrades() {
 
     let grossProfit = 0
     let grossLoss = 0
-    let winAmount = []
-    let lossAmount = []
 
     let peak = 0
     let maxDD = 0
@@ -334,11 +386,9 @@ async function loadTrades() {
         if (pnl > 0) {
             wins++
             grossProfit += pnl
-            winAmount.push(pnl)
         } else if (pnl < 0) {
             losses++
             grossLoss += Math.abs(pnl)
-            lossAmount.push(Math.abs(pnl))
         }
 
         if (totalPnL > peak) peak = totalPnL
@@ -348,40 +398,30 @@ async function loadTrades() {
 
     const winrate = (wins / data.length) * 100
 
-    // --- การคำนวณ ANALYTICS METRICS ---
-
-    // 1. Profit Factor = Gross Profit / Gross Loss
+    // ANALYTICS METRICS
     const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : grossProfit
-
-    // 2. Average Win / Average Loss
     const avgWin = wins > 0 ? (grossProfit / wins) : 0
     const avgLoss = losses > 0 ? (grossLoss / losses) : 0
-
-    // 3. Risk Reward Ratio = Average Win / Average Loss
     const riskReward = avgLoss > 0 ? (avgWin / avgLoss) : avgWin
 
-    // 4. Expectancy = (Win Rate % * Avg Win) - (Loss Rate % * Avg Loss)
     const winRateDec = wins / data.length
     const lossRateDec = losses / data.length
     const expectancy = (winRateDec * avgWin) - (lossRateDec * avgLoss)
 
-    // 5. Strategy Score (สูตรประเมินกลยุทธ์ 0-100)
-    // ให้น้ำหนักจาก Winrate, Profit Factor, และ Max Drawdown
     let strategyScore = 0
     if (data.length > 0) {
-        const pfScore = Math.min(profitFactor / 2, 1) * 40 // สูงสุด 40 คะแนน
-        const wrScore = (winrate / 100) * 40              // สูงสุด 40 คะแนน
-        const ddPenalty = peak > 0 ? Math.min(maxDD / peak, 1) * 20 : 0 // หักคะแนนตาม DD
+        const pfScore = Math.min(profitFactor / 2, 1) * 40
+        const wrScore = (winrate / 100) * 40
+        const ddPenalty = peak > 0 ? Math.min(maxDD / peak, 1) * 20 : 0
         strategyScore = Math.max(0, pfScore + wrScore + (20 - ddPenalty))
     }
 
-    // --- อัปเดต UI ด้านบน ---
+    // UPDATE UI
     document.getElementById("totalPnL").innerText = "$" + totalPnL.toFixed(2)
     document.getElementById("winrate").innerText = winrate.toFixed(1) + "%"
     document.getElementById("totalTrades").innerText = totalTradesCount
     document.getElementById("maxDD").innerText = "$" + maxDD.toFixed(2)
 
-    // --- อัปเดต UI กล่อง ANALYTICS ---
     document.getElementById("profitFactor").innerText = profitFactor.toFixed(2)
     document.getElementById("riskReward").innerText = riskReward.toFixed(2)
     document.getElementById("expectancy").innerText = (expectancy >= 0 ? "$" : "-$") + Math.abs(expectancy).toFixed(2)
@@ -390,19 +430,22 @@ async function loadTrades() {
     drawEquity(labels, equity)
     drawWin(labels, pnlList)
     drawPnL(labels, pnlList)
+
+    if (document.getElementById("listContainer") && document.getElementById("listContainer").style.display !== "none") {
+        renderListView()
+    }
 }
 
 /* ======================
-CHARTS IMPROVED
+CHARTS
 ====================== */
 
 function drawEquity(labels, data) {
     if (equityChart) equityChart.destroy();
+    const ctx = document.getElementById("equityChart")?.getContext("2d");
+    if (!ctx) return;
 
-    const ctx = document.getElementById("equityChart").getContext("2d");
-    
-    // สร้าง Gradient เพิ่มความพรีเมียม
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
     gradient.addColorStop(0, "rgba(34, 197, 94, 0.4)");
     gradient.addColorStop(1, "rgba(34, 197, 94, 0.0)");
 
@@ -419,7 +462,7 @@ function drawEquity(labels, data) {
                 fill: true,
                 tension: 0.3,
                 pointBackgroundColor: "#22c55e",
-                pointRadius: data.length === 1 ? 5 : 3, // เพิ่มจุดถ้ามีเทรดเดียว
+                pointRadius: data.length === 1 ? 5 : 3,
                 pointHoverRadius: 6
             }]
         },
@@ -429,27 +472,12 @@ function drawEquity(labels, data) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: (ctx) => ` Equity: $${ctx.raw.toFixed(2)}`
-                    }
+                    callbacks: { label: (ctx) => ` Equity: $${ctx.raw.toFixed(2)}` }
                 }
             },
             scales: {
-                x: {
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: { color: "#94a3b8" }
-                },
-                y: {
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: {
-                        color: "#94a3b8",
-                        callback: (value) => "$" + value
-                    },
-                    // เริ่มต้นแกน Y จาก 0 เพื่อความสมดุล
-                    beginAtZero: true
-                }
+                x: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8" } },
+                y: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8", callback: (v) => "$" + v }, beginAtZero: true }
             }
         }
     });
@@ -457,18 +485,17 @@ function drawEquity(labels, data) {
 
 function drawWin(labels, pnlList) {
     if (winChart) winChart.destroy();
+    const ctx = document.getElementById("winChart")?.getContext("2d");
+    if (!ctx) return;
 
     let wins = 0;
     let winrateData = [];
-
     pnlList.forEach((pnl, i) => {
         if (pnl > 0) wins++;
         winrateData.push(((wins / (i + 1)) * 100).toFixed(1));
     });
 
-    const ctx = document.getElementById("winChart").getContext("2d");
-    
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
     gradient.addColorStop(0, "rgba(56, 189, 248, 0.3)");
     gradient.addColorStop(1, "rgba(56, 189, 248, 0.0)");
 
@@ -493,26 +520,11 @@ function drawWin(labels, pnlList) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => ` Winrate: ${ctx.raw}%`
-                    }
-                }
+                tooltip: { callbacks: { label: (ctx) => ` Winrate: ${ctx.raw}%` } }
             },
             scales: {
-                x: {
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: { color: "#94a3b8" }
-                },
-                y: {
-                    min: 0,
-                    max: 100, // ล็อกสเกล Winrate 0 - 100% อ่านง่ายขึ้น
-                    grid: { color: "rgba(255, 255, 255, 0.05)" },
-                    ticks: {
-                        color: "#94a3b8",
-                        callback: (value) => value + "%"
-                    }
-                }
+                x: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8" } },
+                y: { min: 0, max: 100, grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8", callback: (v) => v + "%" } }
             }
         }
     });
@@ -520,19 +532,17 @@ function drawWin(labels, pnlList) {
 
 function drawPnL(labels, data) {
     if (pnlChart) pnlChart.destroy();
+    const ctx = document.getElementById("pnlChart")?.getContext("2d");
+    if (!ctx) return;
 
-    const ctx = document.getElementById("pnlChart").getContext("2d");
-
-    // สร้าง Gradient สำหรับแท่ง Win (เขียว) และ Loss (แดง)
-    const winGradient = ctx.createLinearGradient(0, 0, 0, 250);
+    const winGradient = ctx.createLinearGradient(0, 0, 0, 200);
     winGradient.addColorStop(0, "rgba(34, 197, 94, 0.95)");
     winGradient.addColorStop(1, "rgba(34, 197, 94, 0.2)");
 
-    const lossGradient = ctx.createLinearGradient(0, 0, 0, 250);
+    const lossGradient = ctx.createLinearGradient(0, 0, 0, 200);
     lossGradient.addColorStop(0, "rgba(239, 68, 68, 0.2)");
     lossGradient.addColorStop(1, "rgba(239, 68, 68, 0.95)");
 
-    // แปลงรูปแบบวันที่จาก YYYY-MM-DD เป็น วันที่ + เดือนภาษาไทยย่อ (เช่น 3 ส.ค.)
     const formattedLabels = labels.map(dateStr => {
         if (!dateStr) return '';
         const parts = dateStr.split('-');
@@ -540,8 +550,7 @@ function drawPnL(labels, data) {
             const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
             return dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
         }
-        const d = new Date(dateStr);
-        return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        return dateStr;
     });
 
     pnlChart = new Chart(ctx, {
@@ -555,211 +564,77 @@ function drawPnL(labels, data) {
                 borderColor: data.map(v => v >= 0 ? "#22c55e" : "#ef4444"),
                 borderWidth: 1.5,
                 borderRadius: 6,
-                borderSkipped: false,
                 maxBarThickness: 38
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 20 // เพิ่มพื้นที่ด้านบนสำหรับแสดงตัวเลข
-                }
-            },
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: "rgba(15, 23, 42, 0.95)",
-                    titleFont: { family: "Inter", size: 14, weight: "600" },
-                    bodyFont: { family: "JetBrains Mono", size: 15, weight: "700" },
-                    padding: 12,
-                    borderColor: "rgba(255, 255, 255, 0.15)",
-                    borderWidth: 1,
-                    displayColors: false,
                     callbacks: {
-                        label: (ctx) => {
-                            const val = ctx.raw;
-                            return val >= 0 ? ` PnL: +$${val.toFixed(2)}` : ` PnL: -$${Math.abs(val).toFixed(2)}`;
-                        }
+                        label: (ctx) => ctx.raw >= 0 ? ` PnL: +$${ctx.raw.toFixed(2)}` : ` PnL: -$${Math.abs(ctx.raw).toFixed(2)}`
                     }
                 }
             },
             scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: {
-                        color: "#cbd5e1", // เพิ่มความสว่างตัวหนังสือ
-                        font: { family: "Inter", size: 13, weight: "600" }, // ขยายขนาดเป็น 13px และหนาขึ้น
-                        padding: 8
-                    }
-                },
-                y: {
-                    grid: {
-                        color: (context) => context.tick.value === 0 ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.05)",
-                        lineWidth: (context) => context.tick.value === 0 ? 1.5 : 1
-                    },
-                    ticks: {
-                        color: "#94a3b8", // เพิ่มความสว่างตัวหนังสือ
-                        font: { family: "JetBrains Mono", size: 13, weight: "500" }, // ขยายขนาดเป็น 13px
-                        padding: 8,
-                        callback: (value) => value >= 0 ? "$" + value : "-$" + Math.abs(value)
-                    }
-                }
+                x: { grid: { display: false }, ticks: { color: "#cbd5e1" } },
+                y: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8", callback: (v) => v >= 0 ? "$" + v : "-$" + Math.abs(v) } }
             }
         }
     });
 }
 
 /* ======================
-REFRESH
+REFRESH & INIT
 ====================== */
 
 async function refreshDashboard() {
-
     await renderCalendar()
-
     await loadTrades()
-
 }
 
-/* ======================
-INIT
-====================== */
-
 document.addEventListener("DOMContentLoaded", async () => {
-
     await refreshDashboard()
+    createParticles()
 
     document.getElementById("saveTrade").onclick = saveTrade
-
     document.getElementById("deleteTrade").onclick = showDeleteConfirm
-
     document.getElementById("confirmDeleteBtn").onclick = deleteTrade
-
     document.getElementById("cancelDeleteBtn").onclick = () => {
-
         document.getElementById("confirmModal").style.display = "none"
-
     }
-
     document.getElementById("confirmResetBtn").onclick = confirmReset
-
     document.getElementById("cancelResetBtn").onclick = () => {
-
         document.getElementById("resetModal").style.display = "none"
-
     }
-
 })
 
 /* =========================
-ULTRA UI SYSTEM
+TOAST & PARTICLES SYSTEM
 ========================= */
 
-/* TOAST */
-
 function showToast(text, type = "success") {
-
     const toast = document.getElementById("toast")
     const toastText = document.getElementById("toastText")
+    if (!toast || !toastText) return
 
     toastText.innerText = text
-
     toast.classList.remove("success", "error")
-    toast.classList.add(type)
-
-    toast.classList.add("show")
+    toast.classList.add(type, "show")
 
     setTimeout(() => {
         toast.classList.remove("show")
     }, 3000)
-
 }
-
-/* PARTICLES */
 
 function createParticles() {
-
-    for (let i = 0; i < 30; i++) {
-
+    for (let i = 0; i < 25; i++) {
         const p = document.createElement("div")
         p.className = "particle"
-
         p.style.left = Math.random() * 100 + "%"
         p.style.animationDuration = (10 + Math.random() * 20) + "s"
-
         document.body.appendChild(p)
-
     }
-
 }
-
-/* NUMBER COUNTER */
-
-function animateValue(element, start, end, duration) {
-
-    let startTimestamp = null
-
-    function step(timestamp) {
-
-        if (!startTimestamp) startTimestamp = timestamp
-
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1)
-
-        element.innerText = Math.floor(progress * (end - start) + start)
-
-        if (progress < 1)
-            requestAnimationFrame(step)
-
-    }
-
-    requestAnimationFrame(step)
-
-}
-
-/* RESET ANIMATION PATCH */
-
-const originalConfirmReset = confirmReset
-
-confirmReset = async function () {
-
-    document.body.classList.add("flash")
-
-    showToast("Resetting all trades...", "error")
-
-    await originalConfirmReset()
-
-}
-
-/* SAVE TRADE PATCH */
-
-const originalSaveTrade = saveTrade
-
-saveTrade = async function () {
-
-    await originalSaveTrade()
-
-    showToast("Trade Saved 📈", "success")
-
-}
-
-/* DELETE TRADE PATCH */
-
-const originalDeleteTrade = deleteTrade
-
-deleteTrade = async function () {
-
-    await originalDeleteTrade()
-
-    showToast("Trade Deleted", "error")
-
-}
-
-/* PARTICLE INIT */
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    createParticles()
-
-})
