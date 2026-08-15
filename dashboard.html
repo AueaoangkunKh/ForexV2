@@ -26,6 +26,11 @@
                 <div class="status-dot"></div>
                 <div class="status-text">LIVE</div>
 
+                <!-- ปุ่มเปิด Pop-up AI Gold News Analysis อยู่ข้างปุ่ม Reset -->
+                <button class="ai-news-btn" onclick="openAiNewsModal()">
+                    ⚡ AI News
+                </button>
+
                 <button class="reset-btn" onclick="resetTrades()">
                     Reset
                 </button>
@@ -155,6 +160,51 @@
 
         </div>
 
+    </div>
+
+    <!-- AI GOLD NEWS PROBABILITY ANALYSIS MODAL (POP-UP) -->
+    <div class="modal" id="aiNewsModal">
+        <div class="modal-content ai-news-modal-content">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <h2>⚡ AI Gold News Probability Analysis</h2>
+                <button id="btnFetchAiNews" class="btn-refresh-ai" onclick="analyzeGoldNews()">
+                    🔄 Analyze News
+                </button>
+            </div>
+
+            <!-- Probability Gauge Bar -->
+            <div class="probability-container">
+                <div class="prob-header">
+                    <span id="probSignal" class="prob-signal buy">BUY BIAS</span>
+                    <span id="probPercent" class="prob-percent">72%</span>
+                </div>
+                <div class="prob-bar-wrapper">
+                    <div id="probBarFill" class="prob-bar-fill buy" style="width: 72%;"></div>
+                </div>
+                <div class="prob-labels">
+                    <span>SELL (USD Strong)</span>
+                    <span>WAIT (Neutral)</span>
+                    <span>BUY (USD Weak)</span>
+                </div>
+            </div>
+
+            <!-- AI Key Summary -->
+            <div class="ai-summary-box">
+                <div class="summary-title">📌 AI Market Evaluation</div>
+                <p id="aiSummaryText">
+                    ตัวเลขเงินเฟ้อและ Unemployment Claims ฝั่ง USD ออกมาแย่กว่าคาดการณ์ ส่งผลให้ดอลลาร์อ่อนค่าและส่งแรงหนุนทางเทคนิคตามโครงสร้าง SMC ให้กับทองคำ (XAUUSD) ในฝั่ง BUY
+                </p>
+            </div>
+
+            <!-- Impact News List Filtered (แสดงวันที่และเวลา) -->
+            <div class="news-impact-list" id="newsImpactList">
+                <!-- รายการข่าวสาร จะถูก Render ผ่าน JavaScript -->
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button class="cancel" onclick="closeAiNewsModal()">Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- TRADE MODAL -->

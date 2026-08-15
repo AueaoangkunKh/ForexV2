@@ -14,7 +14,10 @@
 .day-count,
 .modal-content input,
 #monthYear,
-.trade-item {
+.trade-item,
+.prob-percent,
+.news-time,
+.news-date {
     font-family: 'JetBrains Mono', monospace;
 }
 
@@ -78,7 +81,7 @@ header {
     letter-spacing: 0.5px;
 }
 
-/* BUTTON */
+/* BUTTONS */
 button {
     border: none;
     cursor: pointer;
@@ -89,6 +92,19 @@ button {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+}
+
+/* AI NEWS BUTTON (อยู่ข้างปุ่ม Reset) */
+.ai-news-btn {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.ai-news-btn:hover {
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    color: #020617;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
 }
 
 .reset-btn {
@@ -194,15 +210,6 @@ button:hover {
     font-size: 16px;
     font-weight: 600;
     color: #f1f5f9;
-}
-
-/* Summary Cards (KPI Metrics ด้านบน) */
-.kpi-card {
-    background: rgba(18, 24, 38, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
 }
 
 /* CHART */
@@ -333,7 +340,7 @@ canvas {
 }
 
 .weekend-header {
-    color: #ef4444; /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
+    color: #ef4444;
 }
 
 .day.disabled-day {
@@ -451,8 +458,7 @@ canvas {
     border-left: 3px solid #ef4444; 
 }
 
-
-/* MODAL */
+/* MODAL GENERAL */
 .modal {
     position: fixed;
     top: 0;
@@ -460,7 +466,7 @@ canvas {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -470,9 +476,9 @@ canvas {
 .modal-content {
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 30px;
+    padding: 24px;
     border-radius: 16px;
-    width: 320px;
+    width: 340px;
     text-align: center;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     animation: popup 0.25s ease;
@@ -543,6 +549,192 @@ canvas {
     background: #475569;
 }
 
+/* =========================================
+   AI GOLD NEWS MODAL STYLES (POP-UP)
+========================================= */
+
+.ai-news-modal-content {
+    width: 100% !important;
+    max-width: 580px !important;
+    text-align: left !important;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.btn-refresh-ai {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-refresh-ai:hover {
+    background: #38bdf8;
+    color: #020617;
+}
+
+/* Probability Gauge Bar */
+.probability-container {
+    background: rgba(2, 6, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.prob-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.prob-signal {
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.prob-signal.buy {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.prob-signal.sell {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.prob-percent {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.prob-bar-wrapper {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.prob-bar-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prob-bar-fill.buy {
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.prob-bar-fill.sell {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.prob-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+/* AI Summary Box */
+.ai-summary-box {
+    background: rgba(56, 189, 248, 0.05);
+    border-left: 3px solid #38bdf8;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.summary-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #38bdf8;
+    margin-bottom: 4px;
+}
+
+.ai-summary-box p {
+    font-size: 12px !important;
+    line-height: 1.5;
+    opacity: 0.9 !important;
+    margin-bottom: 0 !important;
+    text-align: left;
+}
+
+/* News List Items */
+.news-impact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.news-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.news-left-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.news-impact-tag {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.news-impact-tag.red {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.news-impact-tag.orange {
+    background: #f97316;
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+}
+
+.news-title-text {
+    font-weight: 500;
+    color: #e2e8f0;
+}
+
+.news-time-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+.news-date {
+    color: #94a3b8;
+}
+
+.news-time {
+    color: #38bdf8;
+    font-weight: 600;
+}
+
 /* TOAST */
 .toast {
     position: fixed;
@@ -594,7 +786,7 @@ canvas {
     }
 }
 
-/* BUTTON RIPPLE */
+/* BUTTON RIPPLE & ANIMATIONS */
 button:active::after {
     content: "";
     position: absolute;
@@ -620,7 +812,6 @@ button:active::after {
     }
 }
 
-/* MODAL ANIMATION */
 @keyframes popup {
     from {
         transform: scale(.8);
@@ -633,7 +824,7 @@ button:active::after {
     }
 }
 
-/* ULTRA EFFECT PARTICLES */
+/* PARTICLES */
 .particle {
     position: fixed;
     width: 4px;
@@ -674,10 +865,7 @@ button:active::after {
     }
 }
 
-/* =========================================
-   RESPONSIVE BREAKPOINTS (MOBILE & TABLET)
-========================================= */
-
+/* RESPONSIVE BREAKPOINTS */
 @media(max-width: 1100px) {
     .grid {
         grid-template-columns: 1fr;
@@ -704,6 +892,15 @@ button:active::after {
 
     .logo {
         font-size: 16px;
+    }
+
+    .header-right {
+        gap: 8px;
+    }
+
+    button {
+        padding: 7px 10px;
+        font-size: 11px;
     }
 
     .stats-grid {
@@ -733,12 +930,6 @@ button:active::after {
         gap: 3px;
     }
 
-    .calendar-weekdays div {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
     .calendar {
         gap: 3px;
     }
@@ -758,8 +949,10 @@ button:active::after {
     }
 
     .day-count {
-        font-size: 8px;
-        display: none; /* ซ่อนจำนวนเทรดบนจอมือถือเล็กๆ เพื่อความคลีน */
+        display: none;
     }
 
+    .ai-news-modal-content {
+        padding: 18px;
+    }
 }

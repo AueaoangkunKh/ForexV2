@@ -184,7 +184,7 @@ async function renderCalendar() {
 }
 
 /* ======================
-MODAL
+MODAL (TRADE ENTRY)
 ====================== */
 
 function openModal(date) {
@@ -196,6 +196,85 @@ function openModal(date) {
 
 function closeModal() {
     document.getElementById("tradeModal").style.display = "none"
+}
+
+/* ======================
+AI GOLD NEWS MODAL
+====================== */
+
+function openAiNewsModal() {
+    const modal = document.getElementById("aiNewsModal")
+    if (modal) {
+        modal.style.display = "flex"
+        fetchAndRenderAiNews()
+    }
+}
+
+function closeAiNewsModal() {
+    const modal = document.getElementById("aiNewsModal")
+    if (modal) {
+        modal.style.display = "none"
+    }
+}
+
+async function fetchAndRenderAiNews() {
+    showToast("Analyzing real-time news with Gemini AI...", "success")
+
+    const summaryText = document.getElementById("aiSummaryText")
+    if (summaryText) summaryText.innerText = "กำลังดึงข้อมูลข่าวสดและประมวลผลด้วย Gemini AI..."
+
+    try {
+        // ยิงไปที่ Serverless API ในโฟลเดอร์ api/
+        const response = await fetch("/api/analyze-gold-news")
+        if (!response.ok) throw new Error("API Network response was not ok")
+
+        const data = await response.json()
+        const { signal, probability, summary, events } = data
+
+        // 1. อัปเดต Gauge Bar
+        const signalBadge = document.getElementById("aiProbSignal")
+        const percentText = document.getElementById("aiProbPercent")
+        const fillBar = document.getElementById("aiProbFill")
+
+        if (signalBadge && percentText && fillBar) {
+            signalBadge.innerText = signal === "BUY" ? "BULLISH (BUY)" : "BEARISH (SELL)"
+            signalBadge.className = `prob-signal ${signal ? signal.toLowerCase() : 'buy'}`
+            percentText.innerText = `${probability || 50}%`
+            fillBar.style.width = `${probability || 50}%`
+            fillBar.className = `prob-bar-fill ${signal ? signal.toLowerCase() : 'buy'}`
+        }
+
+        // 2. แสดงบทวิเคราะห์ AI
+        if (summaryText) {
+            summaryText.innerText = summary || "ไม่พบข้อมูลวิเคราะห์"
+        }
+
+        // 3. Render ตารางข่าวจริง
+        const newsContainer = document.getElementById("newsImpactList")
+        if (newsContainer && events) {
+            newsContainer.innerHTML = ""
+            events.forEach(news => {
+                const row = document.createElement("div")
+                row.className = "news-item-row"
+                row.innerHTML = `
+                    <div class="news-left-info">
+                        <span class="news-impact-tag ${news.impact}"></span>
+                        <span class="news-title-text">${news.title}</span>
+                    </div>
+                    <div class="news-time-wrap">
+                        <span class="news-date">${news.date}</span>
+                        <span class="news-time">${news.time}</span>
+                    </div>
+                `
+                newsContainer.appendChild(row)
+            })
+        }
+
+    } catch (err) {
+        console.error("AI Fetch Error:", err)
+        showToast("Error connecting to AI News API", "error")
+        if (summaryText) summaryText.innerText = "เกิดข้อผิดพลาดในการดึงข้อมูลข่าวสด"
+    }
 }
 
 /* ======================
