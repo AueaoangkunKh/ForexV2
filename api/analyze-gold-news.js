@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing GEMINI_API_KEY in Vercel settings" })
     }
 
-    // ดึงข้อมูลข่าวจาก FMP (ถ้ามี API Key) หรือใช้ข้อมูล Default ถ้าไม่มี
+    // ดึงข้อมูลข่าวสารจาก FMP (หากมี API Key)
     let usdNews = []
     if (FMP_API_KEY) {
       try {
@@ -62,8 +62,8 @@ Return ONLY valid JSON in this exact structure without markdown or backticks:
 }
 `
 
-    // เปลี่ยน Endpoint มาใช้ generateContent มาตรฐาน
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+    // ระบุชื่อโมเดลเป็น gemini-2.0-flash หรือ gemini-1.5-flash ตรงๆ (ห้ามใส่ -latest)
+    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
