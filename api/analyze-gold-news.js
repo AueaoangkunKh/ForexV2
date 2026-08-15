@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // รองรับ CORS
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
   res.setHeader("Access-Control-Allow-Headers", "Content-Type")
@@ -12,57 +11,51 @@ export default async function handler(req, res) {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
     if (!GEMINI_API_KEY) {
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY in environment variables" })
+      return res.status(500).json({ error: "Missing GEMINI_API_KEY in Vercel Environment Variables" })
     }
 
-    // 1. ดึงข้อมูลปฏิทินเศรษฐกิจจริง (ตัวอย่างใช้ Economic Calendar API)
-    // หมายเหตุ: สามารถเปลี่ยน URL เป็น API ปฏิทินข่าวที่คุณใช้อยู่ได้
-    const today = new Date().toISOString().split("T")[0]
-    const calendarRes = await fetch(`https://financialmodelingprep.com/api/v3/economic_calendar?from=${today}&to=${today}&apikey=${process.env.FMP_API_KEY || ''}`)
-    const rawNews = await calendarRes.json()
-
-    // กรองเฉพาะข่าว USD สำคัญระดับ Medium/High
-    const usdNews = Array.isArray(rawNews) 
-      ? rawNews.filter(n => n.currency === "USD" && (n.impact === "High" || n.impact === "Medium"))
-      : []
-
-    // 2. สร้าง Prompt ส่งให้ Gemini วิเคราะห์สำหรับ XAUUSD (SMC / ICT)
+    // Prompt วิเคราะห์เชิง SMC / ICT สำหรับ Gold (XAUUSD)
     const prompt = `
-    You are an elite Gold (XAUUSD) trader using SMC (Smart Money Concepts) and ICT methodologies.
-    Analyze these economic news events for USD:
-    ${JSON.stringify(usdNews.length > 0 ? usdNews : "No high impact USD news today. Analyze general market sentiment for Gold.")}
+    You are an elite Gold (XAUUSD) trader and analyst using Smart Money Concepts (SMC) and Inner Circle Trader (ICT) methodologies.
+    Analyze the current macroeconomic sentiment for USD and Gold (XAUUSD).
 
-    Evaluate impact on XAUUSD and return ONLY a valid JSON object in this exact format (no markdown formatting, no code blocks):
+    Evaluate impact on Gold (XAUUSD) and return a JSON object with this EXACT structure (no markdown formatting):
     {
-      "signal": "BUY" or "SELL",
-      "probability": number between 50 and 90,
-      "summary": "Brief 2-sentence Thai analysis. Focus on Dollar Index bias, Liquidity Sweeps, and Key FVGs/Order Blocks for Gold.",
+      "signal": "BUY",
+      "probability": 78,
+      "summary": "ดอลลาร์สหรัฐมีสัญญาณชะลอตัวใกล้บริเวณ FVG สำคัญ มองหาโอกาส Buy ตามโครงสร้าง SMC/ICT บริเวณ Discount Zone",
       "events": [
-        { "title": "Event Name", "date": "15 Aug", "time": "19:30", "impact": "red" or "orange" }
+        { "title": "USD Liquidity Sweep & Market Sentiment", "date": "Today", "time": "Live", "impact": "red" }
       ]
     }
     `
 
-    // 3. ยิงไปที่ Gemini API
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // เรียกใช้ gemini-2.5-flash
+    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
       })
     })
 
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text()
+      console.error("Gemini API Error Detail:", errText)
+      return res.status(500).json({ error: `Gemini API Error: ${errText}` })
+    }
+
     const geminiData = await geminiRes.json()
     const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}"
-    
-    // คลีน Format ป้องกัน Markdown ติดมา
-    const cleanJsonText = rawText.replace(/```json|```/g, "").trim()
-    const parsedData = JSON.parse(cleanJsonText)
+    const parsedData = JSON.parse(rawText)
 
     return res.status(200).json(parsedData)
 
   } catch (error) {
-    console.error("AI News Handler Error:", error)
+    console.error("Handler Error:", error)
     return res.status(500).json({ error: error.message })
   }
 }
