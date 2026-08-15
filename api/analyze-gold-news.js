@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // 1. รองรับ CORS
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
   res.setHeader("Access-Control-Allow-Headers", "Content-Type")
@@ -12,7 +11,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing GEMINI_API_KEY in Vercel settings" })
     }
 
-    // 2. Prompt SMC/ICT สำหรับ XAUUSD
     const prompt = `
     You are an expert XAUUSD trader using SMC and ICT methodologies.
     Analyze current market sentiment for Gold and USD.
@@ -27,8 +25,8 @@ export default async function handler(req, res) {
     }
     `
 
-    // 3. ยิงไปที่ Gemini API
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // เปลี่ยน Endpoint เป็น gemini-1.5-flash
+    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
