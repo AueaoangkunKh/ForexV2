@@ -1,18 +1,23 @@
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*")
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
+  // ตั้งค่า CORS ให้ Frontend เรียกใช้งานได้
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") return res.status(200).end()
+  // จัดการ Preflight Request (ถ้ามี)
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
   try {
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY in Vercel settings" })
+      return res.status(500).json({ error: "Missing GEMINI_API_KEY in Vercel settings" });
     }
 
+    // สร้าง Prompt สำหรับวิเคราะห์ SMC/ICT (XAUUSD)
     const prompt = `
-    You are an expert XAUUSD trader using SMC and ICT methodologies.
+    You are an expert Gold (XAUUSD) trader using SMC and ICT methodologies.
     Analyze current market sentiment for Gold and USD.
     Return ONLY a JSON object with this EXACT format:
     {
@@ -23,9 +28,9 @@ export default async function handler(req, res) {
         { "title": "USD Liquidity Scan & Sentiment", "date": "Today", "time": "Live", "impact": "red" }
       ]
     }
-    `
+    `;
 
-    // ปรับ Endpoint เป็น gemini-1.5-flash-latest
+    // ยิง API ไปที่โมเดลล่าสุด (gemini-1.5-flash-latest)
     const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -33,20 +38,23 @@ export default async function handler(req, res) {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { responseMimeType: "application/json" }
       })
-    })
+    });
 
-    const geminiData = await geminiRes.json()
+    const geminiData = await geminiRes.json();
 
+    // ดัก Error กรณี Gemini ตอบกลับมาผิดพลาด
     if (!geminiRes.ok) {
-      return res.status(500).json({ error: geminiData.error?.message || "Gemini API Request Failed" })
+      console.error("Gemini API Error:", geminiData);
+      return res.status(500).json({ error: geminiData.error?.message || "Gemini API Request Failed" });
     }
 
-    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}"
-    const cleanJson = JSON.parse(rawText)
+    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const cleanJson = JSON.parse(rawText);
 
-    return res.status(200).json(cleanJson)
+    return res.status(200).json(cleanJson);
 
   } catch (err) {
-    return res.status(500).json({ error: err.message })
+    console.error("Server Error:", err);
+    return res.status(500).json({ error: err.message });
   }
 }
