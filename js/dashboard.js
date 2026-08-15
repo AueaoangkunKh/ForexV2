@@ -218,47 +218,63 @@ function closeAiNewsModal() {
 }
 
 async function fetchAndRenderAiNews() {
-    showToast("Analyzing real-time news with Gemini AI...", "success")
+    showToast("Analyzing real-time news with Gemini AI...", "success");
 
-    const summaryText = document.getElementById("aiSummaryText")
-    if (summaryText) summaryText.innerText = "กำลังเชื่อมต่อระบบ AI..."
+    const summaryText = document.getElementById("aiSummaryText");
+    if (summaryText) summaryText.innerText = "กำลังประมวลผลบทวิเคราะห์ผ่านระบบ AI...";
 
     try {
-        const response = await fetch("/api/analyze-gold-news")
-        const data = await response.json()
+        // ยิง API แบบ POST ไปที่ Vercel Function
+        const response = await fetch("/api/analyze-gold-news", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            // ส่งค่าเผื่อไว้ใช้ในอนาคต (เช่น เลือกคู่เงิน หรือ Timeframe)
+            body: JSON.stringify({
+                symbol: "XAUUSD",
+                strategy: "SMC/ICT"
+            })
+        });
 
+        const data = await response.json();
+
+        // ตรวจสอบ Error จากเซิร์ฟเวอร์
         if (!response.ok || data.error) {
-            throw new Error(data.error || `HTTP Error ${response.status}`)
+            throw new Error(data.error || `HTTP Error ${response.status}`);
         }
 
-        const signal = data.signal || "BUY"
-        const probability = data.probability || 70
-        const summary = data.summary || "ประมวลผลสำเร็จ"
-        const events = data.events || []
+        // ดึงข้อมูล พร้อมตั้งค่าเริ่มต้นกันเหนียว
+        const signal = data.signal || "BUY";
+        const probability = data.probability || 70;
+        const summary = data.summary || "ประมวลผลสำเร็จ";
+        const events = data.events || [];
 
-        // แสดงผลบน UI
-        if (summaryText) summaryText.innerText = summary
+        // 1. แสดงข้อความสรุป
+        if (summaryText) summaryText.innerText = summary;
 
-        const signalBadge = document.getElementById("aiProbSignal")
-        const percentText = document.getElementById("aiProbPercent")
-        const fillBar = document.getElementById("aiProbFill")
+        // 2. อัปเดต Gauge Bar & Signal Badge
+        const signalBadge = document.getElementById("aiProbSignal");
+        const percentText = document.getElementById("aiProbPercent");
+        const fillBar = document.getElementById("aiProbFill");
 
         if (signalBadge) {
-            signalBadge.innerText = `${signal} BIAS`
-            signalBadge.className = `prob-signal ${signal.toLowerCase()}`
+            signalBadge.innerText = `${signal} BIAS`;
+            signalBadge.className = `prob-signal ${signal.toLowerCase()}`;
         }
-        if (percentText) percentText.innerText = `${probability}%`
+        if (percentText) percentText.innerText = `${probability}%`;
         if (fillBar) {
-            fillBar.style.width = `${probability}%`
-            fillBar.className = `prob-bar-fill ${signal.toLowerCase()}`
+            fillBar.style.width = `${probability}%`;
+            fillBar.className = `prob-bar-fill ${signal.toLowerCase()}`;
         }
 
-        const newsContainer = document.getElementById("newsImpactList")
+        // 3. Render ตารางข่าว
+        const newsContainer = document.getElementById("newsImpactList");
         if (newsContainer && events.length > 0) {
-            newsContainer.innerHTML = ""
+            newsContainer.innerHTML = "";
             events.forEach(news => {
-                const row = document.createElement("div")
-                row.className = "news-item-row"
+                const row = document.createElement("div");
+                row.className = "news-item-row";
                 row.innerHTML = `
                     <div class="news-left-info">
                         <span class="news-impact-tag ${news.impact || 'red'}"></span>
@@ -268,15 +284,15 @@ async function fetchAndRenderAiNews() {
                         <span class="news-date">${news.date}</span>
                         <span class="news-time">${news.time}</span>
                     </div>
-                `
-                newsContainer.appendChild(row)
-            })
+                `;
+                newsContainer.appendChild(row);
+            });
         }
 
     } catch (err) {
-        console.error("AI Fetch Error:", err)
-        showToast(`AI Error: ${err.message}`, "error")
-        if (summaryText) summaryText.innerText = `ขัดข้อง: ${err.message}`
+        console.error("AI Fetch Error:", err);
+        showToast(`AI Error: ${err.message}`, "error");
+        if (summaryText) summaryText.innerText = `ขัดข้อง: ${err.message}`;
     }
 }
 
