@@ -25,8 +25,8 @@ export default async function handler(req, res) {
     }
     `
 
-    // เปลี่ยน Endpoint เป็น gemini-1.5-flash
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // ปรับ Endpoint เป็น gemini-1.5-flash-latest
+    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
