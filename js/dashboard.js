@@ -221,44 +221,50 @@ async function fetchAndRenderAiNews() {
     showToast("Analyzing real-time news with Gemini AI...", "success")
 
     const summaryText = document.getElementById("aiSummaryText")
-    if (summaryText) summaryText.innerText = "กำลังดึงข้อมูลข่าวสดและประมวลผลด้วย Gemini AI..."
+    if (summaryText) summaryText.innerText = "กำลังประมวลผลบทวิเคราะห์..."
 
     try {
-        // ยิงไปที่ Serverless API ในโฟลเดอร์ api/
         const response = await fetch("/api/analyze-gold-news")
-        if (!response.ok) throw new Error("API Network response was not ok")
-
         const data = await response.json()
-        const { signal, probability, summary, events } = data
 
-        // 1. อัปเดต Gauge Bar
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์")
+        }
+
+        // ดึงค่า พร้อมตั้งค่าเริ่มต้นป้องกันค่า undefined/null
+        const signal = data.signal || "BUY"
+        const probability = data.probability || 70
+        const summary = data.summary || "ประมวลผลสำเร็จ แต่ไม่พบข้อความสรุป"
+        const events = data.events || []
+
+        // 1. แสดงข้อความสรุป
+        if (summaryText) summaryText.innerText = summary
+
+        // 2. อัปเดต Gauge Bar & Signal Badge
         const signalBadge = document.getElementById("aiProbSignal")
         const percentText = document.getElementById("aiProbPercent")
         const fillBar = document.getElementById("aiProbFill")
 
-        if (signalBadge && percentText && fillBar) {
-            signalBadge.innerText = signal === "BUY" ? "BULLISH (BUY)" : "BEARISH (SELL)"
-            signalBadge.className = `prob-signal ${signal ? signal.toLowerCase() : 'buy'}`
-            percentText.innerText = `${probability || 50}%`
-            fillBar.style.width = `${probability || 50}%`
-            fillBar.className = `prob-bar-fill ${signal ? signal.toLowerCase() : 'buy'}`
+        if (signalBadge) {
+            signalBadge.innerText = `${signal} BIAS`
+            signalBadge.className = `prob-signal ${signal.toLowerCase()}`
+        }
+        if (percentText) percentText.innerText = `${probability}%`
+        if (fillBar) {
+            fillBar.style.width = `${probability}%`
+            fillBar.className = `prob-bar-fill ${signal.toLowerCase()}`
         }
 
-        // 2. แสดงบทวิเคราะห์ AI
-        if (summaryText) {
-            summaryText.innerText = summary || "ไม่พบข้อมูลวิเคราะห์"
-        }
-
-        // 3. Render ตารางข่าวจริง
+        // 3. Render ตารางข่าว
         const newsContainer = document.getElementById("newsImpactList")
-        if (newsContainer && events) {
+        if (newsContainer && events.length > 0) {
             newsContainer.innerHTML = ""
             events.forEach(news => {
                 const row = document.createElement("div")
                 row.className = "news-item-row"
                 row.innerHTML = `
                     <div class="news-left-info">
-                        <span class="news-impact-tag ${news.impact}"></span>
+                        <span class="news-impact-tag ${news.impact || 'red'}"></span>
                         <span class="news-title-text">${news.title}</span>
                     </div>
                     <div class="news-time-wrap">
@@ -272,8 +278,8 @@ async function fetchAndRenderAiNews() {
 
     } catch (err) {
         console.error("AI Fetch Error:", err)
-        showToast("Error connecting to AI News API", "error")
-        if (summaryText) summaryText.innerText = "เกิดข้อผิดพลาดในการดึงข้อมูลข่าวสด"
+        showToast(`AI Error: ${err.message}`, "error")
+        if (summaryText) summaryText.innerText = `ขัดข้อง: ${err.message}`
     }
 }
 
