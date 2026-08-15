@@ -221,26 +221,24 @@ async function fetchAndRenderAiNews() {
     showToast("Analyzing real-time news with Gemini AI...", "success")
 
     const summaryText = document.getElementById("aiSummaryText")
-    if (summaryText) summaryText.innerText = "กำลังประมวลผลบทวิเคราะห์..."
+    if (summaryText) summaryText.innerText = "กำลังเชื่อมต่อระบบ AI..."
 
     try {
         const response = await fetch("/api/analyze-gold-news")
         const data = await response.json()
 
         if (!response.ok || data.error) {
-            throw new Error(data.error || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์")
+            throw new Error(data.error || `HTTP Error ${response.status}`)
         }
 
-        // ดึงค่า พร้อมตั้งค่าเริ่มต้นป้องกันค่า undefined/null
         const signal = data.signal || "BUY"
         const probability = data.probability || 70
-        const summary = data.summary || "ประมวลผลสำเร็จ แต่ไม่พบข้อความสรุป"
+        const summary = data.summary || "ประมวลผลสำเร็จ"
         const events = data.events || []
 
-        // 1. แสดงข้อความสรุป
+        // แสดงผลบน UI
         if (summaryText) summaryText.innerText = summary
 
-        // 2. อัปเดต Gauge Bar & Signal Badge
         const signalBadge = document.getElementById("aiProbSignal")
         const percentText = document.getElementById("aiProbPercent")
         const fillBar = document.getElementById("aiProbFill")
@@ -255,7 +253,6 @@ async function fetchAndRenderAiNews() {
             fillBar.className = `prob-bar-fill ${signal.toLowerCase()}`
         }
 
-        // 3. Render ตารางข่าว
         const newsContainer = document.getElementById("newsImpactList")
         if (newsContainer && events.length > 0) {
             newsContainer.innerHTML = ""
