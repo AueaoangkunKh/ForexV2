@@ -7,17 +7,9 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* นำ JetBrains Mono มาใช้กับตัวเลขทางการเงินให้อ่านง่ายเป๊ะๆ */
-.stat-card p,
-.analytic-box h3,
-.day-pnl,
-.day-count,
-.modal-content input,
-#monthYear,
-.trade-item {
-    font-family: 'JetBrains Mono', monospace;
-}
-
+/* =========================================================
+   GLOBAL
+========================================================= */
 body {
     background-color: #020617;
     background-image:
@@ -27,15 +19,33 @@ body {
     color: #f8fafc;
     padding: 30px;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
-/* CONTAINER */
+/* นำ JetBrains Mono มาใช้กับตัวเลขทางการเงิน */
+.stat-card p,
+.analytic-box h3,
+.day-pnl,
+.day-count,
+.modal-content input,
+#monthYear,
+.trade-item,
+.ai-probability,
+.ai-price,
+.ai-number {
+    font-family: 'JetBrains Mono', monospace;
+}
+
 .container {
     max-width: 1400px;
     margin: auto;
+    position: relative;
+    z-index: 1;
 }
 
-/* HEADER */
+/* =========================================================
+   HEADER
+========================================================= */
 header {
     display: flex;
     justify-content: space-between;
@@ -46,7 +56,7 @@ header {
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .logo {
@@ -64,11 +74,18 @@ header {
     gap: 15px;
 }
 
+.live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .status-dot {
     width: 10px;
     height: 10px;
     background: #22c55e;
     border-radius: 50%;
+    animation: pulse 1.5s infinite;
 }
 
 .status-text {
@@ -78,7 +95,9 @@ header {
     letter-spacing: 0.5px;
 }
 
-/* BUTTON */
+/* =========================================================
+   BUTTON
+========================================================= */
 button {
     border: none;
     cursor: pointer;
@@ -91,6 +110,17 @@ button {
     overflow: hidden;
 }
 
+button:hover {
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+}
+
+/* RESET */
 .reset-btn {
     background: rgba(239, 68, 68, 0.15);
     color: #f87171;
@@ -103,6 +133,7 @@ button {
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 }
 
+/* LOGOUT */
 .logout-btn {
     background: rgba(255, 255, 255, 0.06);
     color: #cbd5e1;
@@ -114,11 +145,9 @@ button {
     color: white;
 }
 
-button:hover {
-    transform: translateY(-2px);
-}
-
-/* STATS */
+/* =========================================================
+   STATS
+========================================================= */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -155,24 +184,28 @@ button:hover {
     font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.5px;
-    transition: .3s;
+    transition: 0.3s;
 }
 
-/* MAIN GRID */
+/* =========================================================
+   MAIN GRID
+========================================================= */
 .grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 25px;
 }
 
-/* CARD */
+/* =========================================================
+   CARD
+========================================================= */
 .card {
     background: rgba(15, 23, 42, 0.65);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     padding: 22px;
     backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -182,7 +215,9 @@ button:hover {
 .card:hover {
     transform: translateY(-4px);
     border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.05);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(56, 189, 248, 0.05);
 }
 
 .card-header {
@@ -196,7 +231,9 @@ button:hover {
     color: #f1f5f9;
 }
 
-/* Summary Cards (KPI Metrics ด้านบน) */
+/* =========================================================
+   KPI
+========================================================= */
 .kpi-card {
     background: rgba(18, 24, 38, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -205,7 +242,9 @@ button:hover {
     text-align: center;
 }
 
-/* CHART */
+/* =========================================================
+   CHART
+========================================================= */
 .card canvas {
     height: 240px !important;
     width: 100% !important;
@@ -218,7 +257,9 @@ canvas {
     display: block;
 }
 
-/* ANALYTICS */
+/* =========================================================
+   ANALYTICS
+========================================================= */
 .analytics {
     margin-top: 20px;
     width: 100%;
@@ -253,7 +294,9 @@ canvas {
     font-weight: 700;
 }
 
-/* CALENDAR & LIST HEADER ENHANCEMENTS */
+/* =========================================================
+   CALENDAR HEADER
+========================================================= */
 .calendar-card {
     align-items: stretch;
 }
@@ -285,7 +328,9 @@ canvas {
     background: rgba(255, 255, 255, 0.18);
 }
 
-/* VIEW TOGGLE BUTTONS (CALENDAR VS LIST) */
+/* =========================================================
+   VIEW TOGGLE
+========================================================= */
 .view-toggle {
     display: flex;
     background: rgba(2, 6, 23, 0.6);
@@ -314,7 +359,9 @@ canvas {
     transform: none;
 }
 
-/* CALENDAR GRID */
+/* =========================================================
+   CALENDAR
+========================================================= */
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -333,19 +380,7 @@ canvas {
 }
 
 .weekend-header {
-    color: #ef4444; /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
-}
-
-.day.disabled-day {
-    background: rgba(255, 255, 255, 0.02);
-    cursor: not-allowed;
-    opacity: 0.3;
-    border: 1px dashed rgba(255, 255, 255, 0.08);
-}
-
-.day.disabled-day:hover {
-    background: rgba(255, 255, 255, 0.02);
-    transform: none;
+    color: #ef4444;
 }
 
 .day {
@@ -365,6 +400,18 @@ canvas {
     background: #1e293b;
     border-color: rgba(255, 255, 255, 0.2);
     transform: scale(1.04);
+}
+
+.day.disabled-day {
+    background: rgba(255, 255, 255, 0.02);
+    cursor: not-allowed;
+    opacity: 0.3;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.day.disabled-day:hover {
+    background: rgba(255, 255, 255, 0.02);
+    transform: none;
 }
 
 .day-number {
@@ -411,7 +458,9 @@ canvas {
     color: #f87171;
 }
 
-/* TRADE LIST VIEW */
+/* =========================================================
+   TRADE LIST
+========================================================= */
 .trade-list-header {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -441,18 +490,324 @@ canvas {
     border-radius: 10px;
     font-size: 13px;
     align-items: center;
+    transition: 0.2s;
 }
 
-.trade-item.win-item { 
-    border-left: 3px solid #22c55e; 
+.trade-item:hover {
+    background: rgba(30, 41, 59, 0.8);
+    transform: translateX(3px);
 }
 
-.trade-item.loss-item { 
-    border-left: 3px solid #ef4444; 
+.trade-item.win-item {
+    border-left: 3px solid #22c55e;
 }
 
+.trade-item.loss-item {
+    border-left: 3px solid #ef4444;
+}
 
-/* MODAL */
+/* =========================================================
+   AI GOLD NEWS
+========================================================= */
+.ai-news-card {
+    grid-column: 1 / -1;
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-news-card::before {
+    content: "";
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.12), transparent 70%);
+    pointer-events: none;
+}
+
+.ai-news-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.ai-news-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-news-title h2 {
+    margin: 0;
+}
+
+.ai-news-badge {
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: rgba(250, 204, 21, 0.12);
+    color: #fde047;
+    border: 1px solid rgba(250, 204, 21, 0.25);
+}
+
+.ai-news-btn {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    color: #422006;
+    font-weight: 700;
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.12);
+}
+
+.ai-news-btn:hover {
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.25);
+}
+
+.ai-news-grid {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.8fr) minmax(300px, 1.2fr);
+    gap: 18px;
+    margin-top: 5px;
+}
+
+/* AI Summary */
+.ai-summary-box {
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 18px;
+    min-height: 170px;
+}
+
+.ai-summary-label {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.ai-summary-text {
+    color: #cbd5e1;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+/* Probability */
+.ai-probability-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.8));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.ai-probability-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.prob-signal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.prob-signal.buy {
+    color: #4ade80;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.prob-signal.sell {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.ai-probability {
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.ai-probability-bar {
+    width: 100%;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+}
+
+.prob-bar-fill {
+    height: 100%;
+    width: 50%;
+    border-radius: inherit;
+    transition: width 0.7s ease;
+}
+
+.prob-bar-fill.buy {
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.35);
+}
+
+.prob-bar-fill.sell {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+}
+
+/* News list */
+.news-impact-list {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.news-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    transition: 0.2s;
+}
+
+.news-item-row:hover {
+    background: rgba(30, 41, 59, 0.7);
+}
+
+.news-left-info {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.news-impact-tag {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+}
+
+.news-impact-tag.high {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.news-impact-tag.medium {
+    background: #facc15;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+}
+
+.news-impact-tag.low {
+    background: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+.news-title-text {
+    font-size: 12px;
+    color: #cbd5e1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.news-time-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    gap: 2px;
+}
+
+.news-date {
+    font-size: 10px;
+    opacity: 0.55;
+}
+
+.news-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+/* =========================================================
+   AI NEWS MODAL
+========================================================= */
+.ai-news-modal {
+    width: min(900px, calc(100vw - 30px));
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.ai-news-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ai-news-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-news-modal-title h2 {
+    margin: 0;
+}
+
+.ai-close-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+    font-size: 18px;
+}
+
+.ai-close-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+.ai-modal-summary {
+    background: rgba(2, 6, 23, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+    line-height: 1.8;
+    font-size: 13px;
+    color: #cbd5e1;
+    margin-bottom: 18px;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
 .modal {
     position: fixed;
     top: 0;
@@ -465,6 +820,7 @@ canvas {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    padding: 15px;
 }
 
 .modal-content {
@@ -543,7 +899,9 @@ canvas {
     background: #475569;
 }
 
-/* TOAST */
+/* =========================================================
+   TOAST
+========================================================= */
 .toast {
     position: fixed;
     bottom: -100px;
@@ -554,7 +912,7 @@ canvas {
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
     transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
+    z-index: 2000;
 }
 
 .toast.show {
@@ -569,32 +927,24 @@ canvas {
     border-left: 4px solid #ef4444;
 }
 
-/* LIVE PULSE */
-.live-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.status-dot {
-    animation: pulse 1.5s infinite;
-}
-
+/* =========================================================
+   LIVE PULSE
+========================================================= */
 @keyframes pulse {
     0% {
         box-shadow: 0 0 0 0 rgba(34, 197, 94, .6);
     }
-
     70% {
         box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
     }
-
     100% {
         box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
     }
 }
 
-/* BUTTON RIPPLE */
+/* =========================================================
+   BUTTON RIPPLE
+========================================================= */
 button:active::after {
     content: "";
     position: absolute;
@@ -611,29 +961,31 @@ button:active::after {
 @keyframes ripple {
     from {
         opacity: .6;
-        transform: scale(0);
+        transform: translate(-50%, -50%) scale(0);
     }
-
     to {
         opacity: 0;
-        transform: scale(3);
+        transform: translate(-50%, -50%) scale(3);
     }
 }
 
-/* MODAL ANIMATION */
+/* =========================================================
+   MODAL ANIMATION
+========================================================= */
 @keyframes popup {
     from {
         transform: scale(.8);
         opacity: 0;
     }
-
     to {
         transform: scale(1);
         opacity: 1;
     }
 }
 
-/* ULTRA EFFECT PARTICLES */
+/* =========================================================
+   PARTICLES
+========================================================= */
 .particle {
     position: fixed;
     width: 4px;
@@ -650,12 +1002,14 @@ button:active::after {
     from {
         transform: translateY(100vh);
     }
-
     to {
         transform: translateY(-10vh);
     }
 }
 
+/* =========================================================
+   RESET FLASH
+========================================================= */
 .flash {
     animation: flash .6s;
 }
@@ -664,21 +1018,46 @@ button:active::after {
     0% {
         background: #020617;
     }
-
     50% {
         background: rgba(34, 197, 94, 0.13);
     }
-
     100% {
         background: #020617;
     }
 }
 
-/* =========================================
-   RESPONSIVE BREAKPOINTS (MOBILE & TABLET)
-========================================= */
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+.trade-list::-webkit-scrollbar,
+.news-impact-list::-webkit-scrollbar,
+.ai-news-modal::-webkit-scrollbar {
+    width: 6px;
+}
 
-@media(max-width: 1100px) {
+.trade-list::-webkit-scrollbar-track,
+.news-impact-list::-webkit-scrollbar-track,
+.ai-news-modal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.trade-list::-webkit-scrollbar-thumb,
+.news-impact-list::-webkit-scrollbar-thumb,
+.ai-news-modal::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
+}
+
+.trade-list::-webkit-scrollbar-thumb:hover,
+.news-impact-list::-webkit-scrollbar-thumb:hover,
+.ai-news-modal::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.4);
+}
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+@media (max-width: 1100px) {
     .grid {
         grid-template-columns: 1fr;
     }
@@ -690,9 +1069,16 @@ button:active::after {
     .analytics {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .ai-news-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
-@media(max-width: 600px) {
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+@media (max-width: 600px) {
     body {
         padding: 12px;
     }
@@ -700,10 +1086,19 @@ button:active::after {
     header {
         padding: 10px 14px;
         margin-bottom: 14px;
+        gap: 10px;
     }
 
     .logo {
         font-size: 16px;
+    }
+
+    .header-right {
+        gap: 7px;
+    }
+
+    .status-text {
+        display: none;
     }
 
     .stats-grid {
@@ -726,6 +1121,14 @@ button:active::after {
     .analytics {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
+    }
+
+    .analytic-box {
+        padding: 10px 6px;
+    }
+
+    .analytic-box h3 {
+        font-size: 14px;
     }
 
     .calendar-weekdays {
@@ -759,7 +1162,79 @@ button:active::after {
 
     .day-count {
         font-size: 8px;
-        display: none; /* ซ่อนจำนวนเทรดบนจอมือถือเล็กๆ เพื่อความคลีน */
+        display: none;
     }
 
+    .trade-list-header,
+    .trade-item {
+        grid-template-columns: 1fr 1fr 0.8fr;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .trade-item {
+        font-size: 11px;
+    }
+
+    .ai-news-card {
+        padding: 15px;
+    }
+
+    .ai-news-header {
+        align-items: flex-start;
+    }
+
+    .ai-news-title h2 {
+        font-size: 14px;
+    }
+
+    .ai-news-btn {
+        width: 100%;
+    }
+
+    .ai-news-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .ai-summary-box,
+    .ai-probability-box {
+        padding: 13px;
+    }
+
+    .news-item-row {
+        align-items: flex-start;
+        padding: 10px;
+    }
+
+    .news-title-text {
+        white-space: normal;
+        font-size: 11px;
+    }
+
+    .news-time-wrap {
+        min-width: 55px;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 360px;
+        padding: 22px;
+    }
+
+    .ai-news-modal {
+        width: 100%;
+        max-height: 92vh;
+    }
+
+    .toast {
+        left: 12px;
+        right: 12px;
+        bottom: -100px;
+        text-align: center;
+    }
+
+    .toast.show {
+        bottom: 15px;
+    }
 }
