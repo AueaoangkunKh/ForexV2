@@ -24,6 +24,7 @@ let pnlChart = null
 let currentDate = new Date()
 let selectedDate = null
 let currentTradesData = [] // เก็บข้อมูล CacheTrades ไว้ใช้งานใน List View
+let currentPnLType = "win"; // ค่าเริ่มต้นเป็นกำไร (+)
 
 /* ======================
 LOGOUT
@@ -202,19 +203,66 @@ function closeModal() {
 LOAD TRADE
 ====================== */
 
+// ฟังก์ชันสลับสถานะ + / -
+function setPnLType(type) {
+    currentPnLType = type;
+    const btnWin = document.getElementById("btnWin");
+    const btnLoss = document.getElementById("btnLoss");
+    const pnlInput = document.getElementById("pnlInput");
+
+    if (type === "win") {
+        btnWin.classList.add("active");
+        btnLoss.classList.remove("active");
+        if (pnlInput && pnlInput.value) {
+            pnlInput.value = Math.abs(parseFloat(pnlInput.value) || 0);
+        }
+    } else {
+        btnLoss.classList.add("active");
+        btnWin.classList.remove("active");
+        if (pnlInput && pnlInput.value) {
+            const absVal = Math.abs(parseFloat(pnlInput.value) || 0);
+            pnlInput.value = absVal > 0 ? -absVal : "";
+        }
+    }
+}
+
+// อัปเดตเครื่องหมายตามสถานะขณะผู้ใช้กำลังพิมพ์
+function updatePnLSign() {
+    const pnlInput = document.getElementById("pnlInput");
+    if (!pnlInput || pnlInput.value === "") return;
+
+    let val = parseFloat(pnlInput.value);
+    if (isNaN(val)) return;
+
+    if (currentPnLType === "loss" && val > 0) {
+        pnlInput.value = -val;
+    } else if (currentPnLType === "win" && val < 0) {
+        pnlInput.value = Math.abs(val);
+    }
+}
+
+// ปรับปรุงฟังก์ชัน loadTrade เดิม เพื่อให้เลือกปุ่ม + หรือ - ตามข้อมูลเก่าอัตโนมัติ
 async function loadTrade(date) {
     const { data } = await client
         .from("trades")
         .select("*")
         .eq("user_id", user.id)
-        .eq("date", date)
+        .eq("date", date);
 
     if (data && data.length > 0) {
-        document.getElementById("pnlInput").value = data[0].pnl
-        document.getElementById("tradesCountInput").value = data[0].trades_count || 1
+        const pnl = Number(data[0].pnl);
+        document.getElementById("pnlInput").value = pnl;
+        document.getElementById("tradesCountInput").value = data[0].trades_count || 1;
+
+        if (pnl < 0) {
+            setPnLType("loss");
+        } else {
+            setPnLType("win");
+        }
     } else {
-        document.getElementById("pnlInput").value = ""
-        document.getElementById("tradesCountInput").value = "1"
+        document.getElementById("pnlInput").value = "";
+        document.getElementById("tradesCountInput").value = "1";
+        setPnLType("win"); // ค่าเริ่มต้นสำหรับรายการใหม่
     }
 }
 
