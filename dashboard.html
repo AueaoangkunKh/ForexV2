@@ -3,16 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
+    <!-- ปรับ viewport ให้รองรับ responsive บนมือถือเต็มรูปแบบ -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Trading Dashboard</title>
 
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="Logo1.png">
-
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -20,9 +17,6 @@
 
     <div class="container">
 
-        <!-- =========================
-             HEADER
-        ========================== -->
         <header>
             <div class="logo">
                 📊 <span>Trading Journal</span>
@@ -31,11 +25,6 @@
             <div class="header-right">
                 <div class="status-dot"></div>
                 <div class="status-text">LIVE</div>
-
-                <!-- AI NEWS BUTTON -->
-                <button class="ai-news-btn" onclick="openAiNewsModal()">
-                    🤖 AI Gold News
-                </button>
 
                 <button class="reset-btn" onclick="resetTrades()">
                     Reset
@@ -47,11 +36,8 @@
             </div>
         </header>
 
-        <!-- =========================
-             STATS GRID
-        ========================== -->
+        <!-- STATS GRID -->
         <div class="stats-grid">
-
             <div class="stat-card">
                 <h3>Total PnL</h3>
                 <p id="totalPnL">$0</p>
@@ -71,15 +57,12 @@
                 <h3>Max Drawdown</h3>
                 <p id="maxDD">$0</p>
             </div>
-
         </div>
 
-        <!-- =========================
-             MAIN GRID
-        ========================== -->
+        <!-- MAIN GRID -->
         <div class="grid">
 
-            <!-- EQUITY CURVE -->
+            <!-- EQUITY CURVE & ANALYTICS -->
             <div class="card">
                 <div class="card-header">
                     <h2>📈 Equity Curve</h2>
@@ -128,7 +111,7 @@
                 <canvas id="pnlChart"></canvas>
             </div>
 
-            <!-- CALENDAR & LIST -->
+            <!-- CALENDAR & LIST VIEW CARD -->
             <div class="card calendar-card">
                 <div class="calendar-header">
                     <div class="month-nav">
@@ -137,13 +120,10 @@
                         <button onclick="nextMonth()">▶</button>
                     </div>
 
+                    <!-- เพิ่มปุ่ม Toggle สลับ Calendar / List -->
                     <div class="view-toggle">
-                        <button id="btnCalendarView" class="toggle-btn active" onclick="switchView('calendar')">
-                            📅 Calendar
-                        </button>
-                        <button id="btnListView" class="toggle-btn" onclick="switchView('list')">
-                            📋 List
-                        </button>
+                        <button id="btnCalendarView" class="toggle-btn active" onclick="switchView('calendar')">📅 Calendar</button>
+                        <button id="btnListView" class="toggle-btn" onclick="switchView('list')">📋 List</button>
                     </div>
                 </div>
 
@@ -158,10 +138,11 @@
                         <div>ศ.</div>
                         <div class="weekend-header">ส.</div>
                     </div>
+
                     <div class="calendar" id="calendar"></div>
                 </div>
 
-                <!-- LIST VIEW -->
+                <!-- LIST VIEW (ซ่อนไว้เริ่มต้น) -->
                 <div id="listContainer" style="display: none;">
                     <div class="trade-list-header">
                         <span>วันที่</span>
@@ -176,17 +157,14 @@
 
     </div>
 
-    <!-- =====================================================
-         TRADE MODAL
-    ====================================================== -->
+    <!-- TRADE MODAL -->
     <div class="modal" id="tradeModal">
         <div class="modal-content">
             <h2>Add Trade</h2>
             <p id="modalDate"></p>
 
             <input id="pnlInput" placeholder="PnL ($)" type="number" step="any">
-            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1"
-                style="margin-top: 10px;">
+            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1" style="margin-top: 10px;">
 
             <div class="modal-buttons" style="margin-top: 15px;">
                 <button class="save" id="saveTrade">Save</button>
@@ -196,9 +174,7 @@
         </div>
     </div>
 
-    <!-- =====================================================
-         DELETE CONFIRM
-    ====================================================== -->
+    <!-- DELETE CONFIRM -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
             <h2>Delete Trade</h2>
@@ -211,9 +187,7 @@
         </div>
     </div>
 
-    <!-- =====================================================
-         RESET CONFIRM
-    ====================================================== -->
+    <!-- RESET CONFIRM -->
     <div class="modal" id="resetModal">
         <div class="modal-content">
             <h2>Reset All Trades</h2>
@@ -226,97 +200,11 @@
         </div>
     </div>
 
-    <!-- =====================================================
-         🤖 AI GOLD NEWS MODAL
-    ====================================================== -->
-    <div class="modal ai-news-modal" id="aiNewsModal">
-        <div class="modal-content ai-news-content">
-
-            <!-- AI HEADER -->
-            <div class="ai-news-header">
-                <div>
-                    <div class="ai-title">🤖 AI Gold News</div>
-                    <div class="ai-subtitle">XAUUSD Macro & News Analysis</div>
-                </div>
-                <button class="ai-close-btn" onclick="closeAiNewsModal()">✕</button>
-            </div>
-
-            <!-- AI STATUS -->
-            <div class="ai-status" id="aiStatus">
-                <span class="ai-status-dot"></span>
-                <span id="aiStatusText">Ready to analyze</span>
-            </div>
-
-            <!-- SIGNAL -->
-            <div class="ai-signal-card">
-                <div class="ai-signal-top">
-                    <div>
-                        <div class="ai-label">MARKET SIGNAL</div>
-                        <div id="aiProbSignal" class="prob-signal neutral">WAITING</div>
-                    </div>
-
-                    <div class="ai-probability">
-                        <div id="aiProbPercent" class="ai-prob-percent">50%</div>
-                        <div class="ai-label">CONFIDENCE</div>
-                    </div>
-                </div>
-
-                <!-- PROBABILITY BAR -->
-                <div class="prob-bar">
-                    <div id="aiProbFill" class="prob-bar-fill neutral" style="width: 50%;"></div>
-                </div>
-
-                <div class="prob-scale">
-                    <span>SELL</span>
-                    <span>NEUTRAL</span>
-                    <span>BUY</span>
-                </div>
-            </div>
-
-            <!-- AI SUMMARY -->
-            <div class="ai-section">
-                <div class="ai-section-title">🧠 AI Analysis</div>
-                <div id="aiSummaryText" class="ai-summary">
-                    กด AI Gold News เพื่อเริ่มวิเคราะห์ข่าว XAUUSD
-                </div>
-            </div>
-
-            <!-- NEWS EVENTS -->
-            <div class="ai-section">
-                <div class="ai-section-title">📰 Important News</div>
-                <div id="newsImpactList" class="news-impact-list">
-                    <div class="news-empty">ยังไม่มีข้อมูลข่าว</div>
-                </div>
-            </div>
-
-            <!-- AI DISCLAIMER -->
-            <div class="ai-disclaimer">
-                ⚠️ AI analysis is for informational purposes only. Always confirm market conditions before trading.
-            </div>
-
-            <!-- ACTION BUTTONS -->
-            <div class="ai-actions">
-                <button class="ai-refresh-btn" onclick="fetchAndRenderAiNews()">
-                    🔄 Analyze Again
-                </button>
-                <button class="cancel" onclick="closeAiNewsModal()">
-                    Close
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- =====================================================
-         TOAST
-    ====================================================== -->
+    <!-- TOAST -->
     <div class="toast" id="toast">
         <span id="toastText"></span>
     </div>
 
-    <!-- =====================================================
-         DASHBOARD JS
-    ====================================================== -->
     <script src="js/dashboard.js"></script>
 
 </body>
