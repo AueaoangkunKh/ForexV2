@@ -122,7 +122,8 @@
 
                     <!-- เพิ่มปุ่ม Toggle สลับ Calendar / List -->
                     <div class="view-toggle">
-                        <button id="btnCalendarView" class="toggle-btn active" onclick="switchView('calendar')">📅 Calendar</button>
+                        <button id="btnCalendarView" class="toggle-btn active" onclick="switchView('calendar')">📅
+                            Calendar</button>
                         <button id="btnListView" class="toggle-btn" onclick="switchView('list')">📋 List</button>
                     </div>
                 </div>
@@ -163,8 +164,19 @@
             <h2>Add Trade</h2>
             <p id="modalDate"></p>
 
-            <input id="pnlInput" placeholder="PnL ($)" type="number" step="any">
-            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1" style="margin-top: 10px;">
+            <!-- PnL Type Selector (+ / -) -->
+            <div class="pnl-type-toggle">
+                <button type="button" id="btnWin" class="type-btn win active" onclick="setPnLType('win')">
+                    + Win
+                </button>
+                <button type="button" id="btnLoss" class="type-btn loss" onclick="setPnLType('loss')">
+                    - Loss
+                </button>
+            </div>
+
+            <input id="pnlInput" placeholder="Enter amount ($)" type="number" step="any" oninput="updatePnLSign()">
+            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1"
+                style="margin-top: 10px;">
 
             <div class="modal-buttons" style="margin-top: 15px;">
                 <button class="save" id="saveTrade">Save</button>
