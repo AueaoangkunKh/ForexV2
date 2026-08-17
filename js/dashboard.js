@@ -195,8 +195,20 @@ function openModal(date) {
     loadTrade(date)
 }
 
+// ฟังก์ชันปิด Trade Modal (หน้าเพิ่ม/แก้ไข Trade)
 function closeModal() {
-    document.getElementById("tradeModal").style.display = "none"
+    const modal = document.getElementById("tradeModal");
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// ฟังก์ชันปิด Summary Modal (หน้าการ์ดสรุปผล)
+function closeSummaryModal() {
+    const summaryModal = document.getElementById("summaryModal");
+    if (summaryModal) {
+        summaryModal.style.display = "none";
+    }
 }
 
 /* ======================
@@ -684,5 +696,99 @@ function createParticles() {
         p.style.left = Math.random() * 100 + "%"
         p.style.animationDuration = (10 + Math.random() * 20) + "s"
         document.body.appendChild(p)
+    }
+}
+
+// เปิด Modal และอัปเดตข้อมูลสถิติลงการ์ด
+async function openSummaryModal() {
+    let displayName = "Trader";
+
+    try {
+        // 1. ลองดึงจากตัวแปร user หรือ Supabase Session
+        let currentUser = typeof user !== "undefined" ? user : null;
+        
+        if (!currentUser && typeof supabase !== "undefined") {
+            const { data } = await supabase.auth.getUser();
+            currentUser = data?.user;
+        }
+
+        // 2. ถ้าเจอ User ใน Supabase Auth
+        if (currentUser) {
+            displayName = currentUser.user_metadata?.username || 
+                          currentUser.user_metadata?.full_name || 
+                          (currentUser.email ? currentUser.email.split("@")[0] : null);
+        }
+
+        // 3. ถ้ายังไม่เจอ ให้ลองดึงจาก LocalStorage (เผื่อเซฟไว้ตอน Login)
+        if (!displayName || displayName === "Trader") {
+            const storedUser = localStorage.getItem("user") || localStorage.getItem("sb-user");
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                displayName = parsed.username || parsed.email?.split("@")[0] || displayName;
+            }
+        }
+    } catch (e) {
+        console.log("Error fetching user info:", e);
+    }
+
+    // อัปเดตชื่อผู้ใช้งานลงการ์ด
+    document.getElementById("summaryUsername").innerText = displayName || "Trader";
+
+    // ดึงข้อมูลสถิติลงการ์ด
+    const totalPnL = document.getElementById("totalPnL")?.innerText || "$0.00";
+    const winrate = document.getElementById("winrate")?.innerText || "0%";
+    const totalTrades = document.getElementById("totalTrades")?.innerText || "0";
+    const maxDD = document.getElementById("maxDD")?.innerText || "$0.00";
+    const profitFactor = document.getElementById("profitFactor")?.innerText || "0.00";
+    const monthYear = document.getElementById("monthYear")?.innerText || "";
+
+    document.getElementById("sumTotalPnL").innerText = totalPnL;
+    document.getElementById("sumWinrate").innerText = winrate;
+    document.getElementById("sumTrades").innerText = totalTrades;
+    document.getElementById("sumMaxDD").innerText = maxDD;
+    document.getElementById("sumPF").innerText = profitFactor;
+    document.getElementById("summaryDate").innerText = monthYear;
+
+    // กำหนดสีตามผลกำไร / ขาดทุน
+    const pnlElem = document.getElementById("sumTotalPnL");
+    if (totalPnL.includes("-")) {
+        pnlElem.style.color = "#f87171";
+    } else {
+        pnlElem.style.color = "#4ade80";
+    }
+
+    document.getElementById("summaryModal").style.display = "flex";
+}
+
+// ฟังก์ชันคัดลอกรูปภาพโดยเปิดใช้ letterRendering เพื่อป้องกันตัวหนังสือขี่กัน
+async function copySummaryImage() {
+    const card = document.getElementById("summaryCard");
+    if (!card) return;
+
+    try {
+        if (typeof showToast === "function") showToast("Generating image...", "success");
+
+        const canvas = await html2canvas(card, {
+            scale: 3, // เพิ่มความคมชัดระดับ HD
+            backgroundColor: null,
+            useCORS: true,
+            letterRendering: true, // ป้องกันตัวอักษรซ้อนขี่กัน
+            logging: false
+        });
+
+        canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            try {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                if (typeof showToast === "function") showToast("Copied image to clipboard! 📋", "success");
+            } catch (err) {
+                const image = canvas.toDataURL("image/png");
+                const newWindow = window.open();
+                newWindow.document.write(`<img src="${image}" style="max-width:100%;" />`);
+            }
+        });
+    } catch (e) {
+        console.error(e);
     }
 }

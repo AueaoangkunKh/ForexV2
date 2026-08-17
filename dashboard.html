@@ -26,6 +26,10 @@
                 <div class="status-dot"></div>
                 <div class="status-text">LIVE</div>
 
+                <button class="share-btn" onclick="openSummaryModal()">
+                    📸 Share
+                </button>
+
                 <button class="reset-btn" onclick="resetTrades()">
                     Reset
                 </button>
@@ -217,7 +221,61 @@
         <span id="toastText"></span>
     </div>
 
+    <!-- SHARE SUMMARY MODAL -->
+    <div class="modal" id="summaryModal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0; margin-bottom: 4px; font-size: 18px;">Trade Summary Card</h2>
+            <p style="margin-bottom: 16px; font-size: 12px; opacity: 0.6;">Preview & Copy image to clipboard</p>
+
+            <!-- การ์ดสรุปผล -->
+            <div id="summaryCard" class="summary-card-export">
+                <div class="summary-card-header">
+                    <div class="summary-brand">
+                        👤 <span id="summaryUsername">Trader</span>
+                    </div>
+                    <div id="summaryDate" class="summary-date">สิงหาคม 2026</div>
+                </div>
+
+                <div class="summary-card-body">
+                    <div class="summary-main-stat">
+                        <span class="label">Net Profit / Loss</span>
+                        <h1 id="sumTotalPnL">$0.00</h1>
+                    </div>
+
+                    <div class="summary-grid">
+                        <div class="sum-box">
+                            <span>Winrate</span>
+                            <strong id="sumWinrate">0%</strong>
+                        </div>
+                        <div class="sum-box">
+                            <span>Profit Factor</span>
+                            <strong id="sumPF">0.00</strong>
+                        </div>
+                        <div class="sum-box">
+                            <span>Total Trades</span>
+                            <strong id="sumTrades">0</strong>
+                        </div>
+                        <div class="sum-box">
+                            <span>Max DD</span>
+                            <strong id="sumMaxDD">$0.00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-card-footer">
+                    <span>Verified Trading Journal</span>
+                </div>
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 18px; width: 100%; display: flex; gap: 8px;">
+                <button class="save" style="flex: 1;" onclick="copySummaryImage()">📋 Copy Image</button>
+                <button class="cancel" style="flex: 1;" onclick="closeSummaryModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="js/dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 </body>
 

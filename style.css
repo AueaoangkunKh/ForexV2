@@ -333,7 +333,8 @@ canvas {
 }
 
 .weekend-header {
-    color: #ef4444; /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
+    color: #ef4444;
+    /* สีแดงสำหรับวันเสาร์และวันอาทิตย์ */
 }
 
 .day.disabled-day {
@@ -443,12 +444,12 @@ canvas {
     align-items: center;
 }
 
-.trade-item.win-item { 
-    border-left: 3px solid #22c55e; 
+.trade-item.win-item {
+    border-left: 3px solid #22c55e;
 }
 
-.trade-item.loss-item { 
-    border-left: 3px solid #ef4444; 
+.trade-item.loss-item {
+    border-left: 3px solid #ef4444;
 }
 
 
@@ -759,7 +760,8 @@ button:active::after {
 
     .day-count {
         font-size: 8px;
-        display: none; /* ซ่อนจำนวนเทรดบนจอมือถือเล็กๆ เพื่อความคลีน */
+        display: none;
+        /* ซ่อนจำนวนเทรดบนจอมือถือเล็กๆ เพื่อความคลีน */
     }
 
 }
@@ -807,4 +809,131 @@ button:active::after {
     color: #f87171;
     border-color: rgba(239, 68, 68, 0.5);
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
+}
+
+/* SHARE BUTTON */
+.share-btn {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.share-btn:hover {
+    background: #38bdf8;
+    color: #020617;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+
+/* จัดการ Modal สรุปผลให้ครอบการ์ดพอดีและไม่ล้นกรอบ */
+#summaryModal .modal-content {
+    width: auto !important;
+    max-width: 90vw;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* SUMMARY CARD EXPORT STYLES (FIXED DISPLAY) */
+.summary-card-export {
+    background: #090d16;
+    background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 60%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 28px;
+    text-align: left;
+    color: #f8fafc;
+    width: 380px;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.summary-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+    gap: 12px;
+}
+
+.summary-brand {
+    font-weight: 700;
+    font-size: 14px;
+    color: #38bdf8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.summary-date {
+    font-size: 13px;
+    color: #94a3b8;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.summary-main-stat {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.summary-main-stat .label {
+    font-size: 13px;
+    color: #94a3b8;
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.summary-main-stat h1 {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 34px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.sum-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.sum-box span {
+    font-size: 12px;
+    color: #94a3b8;
+    display: block;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+
+.sum-box strong {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 18px;
+    color: #38bdf8;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.summary-card-footer {
+    text-align: center;
+    font-size: 11px;
+    color: #64748b;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    padding-top: 12px;
+    letter-spacing: 0.5px;
 }
