@@ -41,7 +41,17 @@
         </header>
 
         <!-- STATS GRID -->
-        <div class="stats-grid">
+        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <!-- BALANCE & DEPOSIT/WITHDRAW CARD -->
+            <div class="stat-card balance-card">
+                <h3>Current Balance</h3>
+                <p id="totalBalance" style="color: #38bdf8;">$0.00</p>
+                <div class="trans-btn-group">
+                    <button class="trans-btn dep-btn" onclick="openTransactionModal('deposit')">➕ ฝาก</button>
+                    <button class="trans-btn wth-btn" onclick="openTransactionModal('withdraw')">➖ ถอน</button>
+                </div>
+            </div>
+
             <div class="stat-card">
                 <h3>Total PnL</h3>
                 <p id="totalPnL">$0</p>
@@ -190,6 +200,21 @@
         </div>
     </div>
 
+    <!-- TRANSACTION MODAL (ฝาก/ถอน) -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <h2 id="transModalTitle">ฝากเงิน</h2>
+            <p style="opacity: 0.7; font-size: 12px; margin-bottom: 12px;">ระบุจำนวนเงินที่ต้องการฝาก/ถอน</p>
+
+            <input id="transAmountInput" placeholder="Enter amount ($)" type="number" step="any" min="0.01">
+
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button class="save" onclick="saveTransaction()">Save</button>
+                <button class="cancel" onclick="closeTransactionModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- DELETE CONFIRM -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
@@ -207,7 +232,7 @@
     <div class="modal" id="resetModal">
         <div class="modal-content">
             <h2>Reset All Trades</h2>
-            <p>This will delete all trades</p>
+            <p>This will delete all trades and transactions</p>
 
             <div class="modal-buttons">
                 <button class="delete" id="confirmResetBtn">Reset</button>
@@ -273,7 +298,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="js/dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 

@@ -937,3 +937,46 @@ button:active::after {
     padding-top: 12px;
     letter-spacing: 0.5px;
 }
+
+/* BALANCE CARD & TRANSACTION BUTTONS */
+.balance-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.trans-btn-group {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.trans-btn {
+    flex: 1;
+    padding: 6px 0;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+.dep-btn {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.dep-btn:hover {
+    background: #22c55e;
+    color: white;
+}
+
+.wth-btn {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.wth-btn:hover {
+    background: #ef4444;
+    color: white;
+}

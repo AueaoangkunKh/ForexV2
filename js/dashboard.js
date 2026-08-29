@@ -25,6 +25,7 @@ let currentDate = new Date()
 let selectedDate = null
 let currentTradesData = [] // เก็บข้อมูล CacheTrades ไว้ใช้งานใน List View
 let currentPnLType = "win"; // ค่าเริ่มต้นเป็นกำไร (+)
+let currentTransType = "deposit"; // deposit หรือ withdraw
 
 /* ======================
 LOGOUT
@@ -185,7 +186,7 @@ async function renderCalendar() {
 }
 
 /* ======================
-MODAL
+MODAL (TRADE & TRANSACTION)
 ====================== */
 
 function openModal(date) {
@@ -195,7 +196,6 @@ function openModal(date) {
     loadTrade(date)
 }
 
-// ฟังก์ชันปิด Trade Modal (หน้าเพิ่ม/แก้ไข Trade)
 function closeModal() {
     const modal = document.getElementById("tradeModal");
     if (modal) {
@@ -203,7 +203,6 @@ function closeModal() {
     }
 }
 
-// ฟังก์ชันปิด Summary Modal (หน้าการ์ดสรุปผล)
 function closeSummaryModal() {
     const summaryModal = document.getElementById("summaryModal");
     if (summaryModal) {
@@ -211,11 +210,80 @@ function closeSummaryModal() {
     }
 }
 
+/* --- TRANSACTION MODAL (DEPOSIT / WITHDRAW) --- */
+function openTransactionModal(type) {
+    currentTransType = type;
+    const titleElem = document.getElementById("transModalTitle");
+    const inputElem = document.getElementById("transAmountInput");
+    
+    if (titleElem) {
+        titleElem.innerText = type === "deposit" ? "💵 ฝากเงิน (Deposit)" : "💸 ถอนเงิน (Withdraw)";
+    }
+    if (inputElem) {
+        inputElem.value = "";
+    }
+    
+    document.getElementById("transactionModal").style.display = "flex";
+}
+
+function closeTransactionModal() {
+    const transModal = document.getElementById("transactionModal");
+    if (transModal) {
+        transModal.style.display = "none";
+    }
+}
+
+/* --- TRANSACTION FUNCTIONS --- */
+async function saveTransaction() {
+    const amountVal = parseFloat(document.getElementById("transAmountInput").value);
+
+    if (isNaN(amountVal) || amountVal <= 0) {
+        showToast("กรุณากรอกจำนวนเงินให้ถูกต้อง", "error");
+        return;
+    }
+
+    // ดึง User ID จาก localStorage โดยตรง
+    const userId = user ? (user.id || user.email) : "default_user";
+
+    const { data, error } = await client
+        .from("transactions")
+        .insert([
+            {
+                user_id: String(userId),
+                type: currentTransType,
+                amount: amountVal
+            }
+        ]);
+
+    if (error) {
+        console.error("Supabase Error Detail:", error);
+        showToast("เกิดข้อผิดพลาด: " + (error.message || "บันทึกไม่ได้"), "error");
+    } else {
+        showToast(currentTransType === "deposit" ? "ฝากเงินสำเร็จ 🟢" : "ถอนเงินสำเร็จ 🔴", "success");
+        closeTransactionModal();
+        await refreshDashboard();
+    }
+}
+
+async function getTotalCapital() {
+    const userId = user ? (user.id || user.email) : "default_user";
+
+    const { data, error } = await client
+        .from("transactions")
+        .select("*")
+        .eq("user_id", String(userId));
+
+    if (error || !data) return 0;
+
+    return data.reduce((acc, curr) => {
+        return curr.type === "deposit" ? acc + Number(curr.amount) : acc - Number(curr.amount);
+    }, 0);
+}
+
 /* ======================
 LOAD TRADE
 ====================== */
 
-// ฟังก์ชันสลับสถานะ + / -
 function setPnLType(type) {
     currentPnLType = type;
     const btnWin = document.getElementById("btnWin");
@@ -238,7 +306,6 @@ function setPnLType(type) {
     }
 }
 
-// อัปเดตเครื่องหมายตามสถานะขณะผู้ใช้กำลังพิมพ์
 function updatePnLSign() {
     const pnlInput = document.getElementById("pnlInput");
     if (!pnlInput || pnlInput.value === "") return;
@@ -253,7 +320,6 @@ function updatePnLSign() {
     }
 }
 
-// ปรับปรุงฟังก์ชัน loadTrade เดิม เพื่อให้เลือกปุ่ม + หรือ - ตามข้อมูลเก่าอัตโนมัติ
 async function loadTrade(date) {
     const { data } = await client
         .from("trades")
@@ -274,7 +340,7 @@ async function loadTrade(date) {
     } else {
         document.getElementById("pnlInput").value = "";
         document.getElementById("tradesCountInput").value = "1";
-        setPnLType("win"); // ค่าเริ่มต้นสำหรับรายการใหม่
+        setPnLType("win");
     }
 }
 
@@ -358,10 +424,17 @@ function resetTrades() {
 
 async function confirmReset() {
     document.body.classList.add("flash")
-    showToast("Resetting all trades...", "error")
+    showToast("Resetting all trades & transactions...", "error")
 
+    // ลบ Trades ทั้งหมด
     await client
         .from("trades")
+        .delete()
+        .eq("user_id", user.id)
+
+    // ลบ Transactions ทั้งหมด
+    await client
+        .from("transactions")
         .delete()
         .eq("user_id", user.id)
 
@@ -388,6 +461,8 @@ LOAD TRADES & METRICS
 ====================== */
 
 async function loadTrades() {
+    const capital = await getTotalCapital();
+
     const { data } = await client
         .from("trades")
         .select("*")
@@ -397,6 +472,7 @@ async function loadTrades() {
     currentTradesData = data || []
 
     if (!data || data.length === 0) {
+        document.getElementById("totalBalance").innerText = "$" + capital.toFixed(2);
         document.getElementById("totalPnL").innerText = "$0.00"
         document.getElementById("winrate").innerText = "0%"
         document.getElementById("totalTrades").innerText = "0"
@@ -476,7 +552,14 @@ async function loadTrades() {
         strategyScore = Math.max(0, pfScore + wrScore + (20 - ddPenalty))
     }
 
-    // UPDATE UI
+    // UPDATE UI BALANCE & STATS
+    const currentBalance = capital + totalPnL;
+    const balanceElem = document.getElementById("totalBalance");
+    if (balanceElem) {
+        balanceElem.innerText = (currentBalance >= 0 ? "$" : "-$") + Math.abs(currentBalance).toFixed(2);
+        balanceElem.style.color = currentBalance >= 0 ? "#38bdf8" : "#f87171";
+    }
+
     document.getElementById("totalPnL").innerText = "$" + totalPnL.toFixed(2)
     document.getElementById("winrate").innerText = winrate.toFixed(1) + "%"
     document.getElementById("totalTrades").innerText = totalTradesCount
@@ -699,12 +782,10 @@ function createParticles() {
     }
 }
 
-// เปิด Modal และอัปเดตข้อมูลสถิติลงการ์ด
 async function openSummaryModal() {
     let displayName = "Trader";
 
     try {
-        // 1. ลองดึงจากตัวแปร user หรือ Supabase Session
         let currentUser = typeof user !== "undefined" ? user : null;
         
         if (!currentUser && typeof supabase !== "undefined") {
@@ -712,14 +793,12 @@ async function openSummaryModal() {
             currentUser = data?.user;
         }
 
-        // 2. ถ้าเจอ User ใน Supabase Auth
         if (currentUser) {
             displayName = currentUser.user_metadata?.username || 
                           currentUser.user_metadata?.full_name || 
                           (currentUser.email ? currentUser.email.split("@")[0] : null);
         }
 
-        // 3. ถ้ายังไม่เจอ ให้ลองดึงจาก LocalStorage (เผื่อเซฟไว้ตอน Login)
         if (!displayName || displayName === "Trader") {
             const storedUser = localStorage.getItem("user") || localStorage.getItem("sb-user");
             if (storedUser) {
@@ -731,10 +810,8 @@ async function openSummaryModal() {
         console.log("Error fetching user info:", e);
     }
 
-    // อัปเดตชื่อผู้ใช้งานลงการ์ด
     document.getElementById("summaryUsername").innerText = displayName || "Trader";
 
-    // ดึงข้อมูลสถิติลงการ์ด
     const totalPnL = document.getElementById("totalPnL")?.innerText || "$0.00";
     const winrate = document.getElementById("winrate")?.innerText || "0%";
     const totalTrades = document.getElementById("totalTrades")?.innerText || "0";
@@ -749,7 +826,6 @@ async function openSummaryModal() {
     document.getElementById("sumPF").innerText = profitFactor;
     document.getElementById("summaryDate").innerText = monthYear;
 
-    // กำหนดสีตามผลกำไร / ขาดทุน
     const pnlElem = document.getElementById("sumTotalPnL");
     if (totalPnL.includes("-")) {
         pnlElem.style.color = "#f87171";
@@ -760,7 +836,6 @@ async function openSummaryModal() {
     document.getElementById("summaryModal").style.display = "flex";
 }
 
-// ฟังก์ชันคัดลอกรูปภาพโดยเปิดใช้ letterRendering เพื่อป้องกันตัวหนังสือขี่กัน
 async function copySummaryImage() {
     const card = document.getElementById("summaryCard");
     if (!card) return;
@@ -769,10 +844,10 @@ async function copySummaryImage() {
         if (typeof showToast === "function") showToast("Generating image...", "success");
 
         const canvas = await html2canvas(card, {
-            scale: 3, // เพิ่มความคมชัดระดับ HD
+            scale: 3,
             backgroundColor: null,
             useCORS: true,
-            letterRendering: true, // ป้องกันตัวอักษรซ้อนขี่กัน
+            letterRendering: true,
             logging: false
         });
 
