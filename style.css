@@ -43,6 +43,7 @@ body {
     z-index: 1;
     max-width: 1380px;
     margin: auto;
+    zoom: 1.1; /* ล็อกสเกล 110% อัตโนมัติเหมือนตอนกดซูมเบราว์เซอร์ */
 }
 
 /* HEADER */
@@ -699,6 +700,7 @@ button:hover {
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
+    .container { zoom: 1; } /* คืนค่าซูมปกติบนจอเล็ก */
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .quad-grid { grid-template-columns: 1fr; }
 }
