@@ -41,7 +41,7 @@ body {
 .container {
     position: relative;
     z-index: 1;
-    max-width: 1220px; /* ปรับจาก 1380px เป็น 1220px เพื่อให้พอคูณ zoom: 1.1 แล้วไม่ล้นขอบขวา */
+    max-width: 1220px;
     margin: auto;
     zoom: 1.1;
 }
@@ -235,7 +235,7 @@ button:hover {
 .wth-btn { background: rgba(239, 68, 68, 0.16); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 .wth-btn:hover { background: #ef4444; color: white; }
 
-/* 2x2 BALANCED GRID (สัดส่วนธรรมชาติเหมือนรูปแรก) */
+/* 2x2 BALANCED GRID */
 .quad-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -250,6 +250,7 @@ button:hover {
     backdrop-filter: blur(14px);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .card-header-flex {
@@ -292,17 +293,19 @@ button:hover {
 .tf-btn:hover { transform: none; color: white; }
 .tf-btn.active { background: #38bdf8; color: #020617; font-weight: 700; }
 
-/* FIXED NATURAL CHART HEIGHTS (ไม่ยืดไม่บี้) */
+/* FIXED NATURAL CHART HEIGHTS */
 .chart-wrapper-equity {
     position: relative;
     height: 195px;
     width: 100%;
+    overflow: hidden;
 }
 
 .chart-wrapper-sub {
     position: relative;
-    height: 245px;
+    height: 235px;
     width: 100%;
+    overflow: hidden;
 }
 
 /* ANALYTICS SUB-BAR */
@@ -406,6 +409,10 @@ button:hover {
 .bw-pill.loss { background: rgba(239, 68, 68, 0.14); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 
 /* CALENDAR & LIST (BOTTOM-RIGHT) */
+.calendar-card {
+    justify-content: space-between;
+}
+
 .calendar-header {
     display: flex;
     justify-content: space-between;
@@ -458,7 +465,7 @@ button:hover {
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 9px;
     padding: 6px 7px;
-    min-height: 46px;
+    min-height: 44px;
     cursor: pointer;
     transition: 0.18s;
     display: flex;
@@ -492,7 +499,7 @@ button:hover {
 }
 
 .trade-list {
-    max-height: 230px;
+    max-height: 220px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -700,7 +707,7 @@ button:hover {
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
-    .container { zoom: 1; } /* คืนค่าซูมปกติบนจอเล็ก */
+    .container { zoom: 1; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .quad-grid { grid-template-columns: 1fr; }
 }

@@ -402,7 +402,7 @@ async function loadTrades() {
 
     currentTradesData = data || [];
 
-if (!data || data.length === 0) {
+    if (!data || data.length === 0) {
         animateValue("totalBalance", capital, "$", "", 2);
         animateValue("totalPnL", 0, "$", "", 2);
         animateValue("winrate", 0, "", "%", 1);
@@ -585,8 +585,21 @@ function drawEquity(labels, data) {
                 }
             },
             scales: {
-                x: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", maxTicksLimit: 8, font: { size: 10 } } },
-                y: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", font: { size: 10 }, callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v) } }
+                x: {
+                    grid: { color: "rgba(255, 255, 255, 0.04)" },
+                    ticks: { color: "#94a3b8", maxTicksLimit: 8, font: { size: 10 } }
+                },
+                y: {
+                    min: data.length === 0 ? -100 : undefined,
+                    max: data.length === 0 ? 100 : undefined,
+                    grid: { color: "rgba(255, 255, 255, 0.04)" },
+                    ticks: {
+                        color: "#94a3b8",
+                        font: { size: 10 },
+                        maxTicksLimit: 5,
+                        callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v)
+                    }
+                }
             }
         }
     });
@@ -739,9 +752,15 @@ function drawPnL(labels, data) {
                     }
                 },
                 y: {
+                    min: data.length === 0 ? -100 : undefined,
+                    max: data.length === 0 ? 100 : undefined,
                     grace: "18%",
                     grid: { color: "rgba(255, 255, 255, 0.04)" },
-                    ticks: { color: "#64748b", callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v) }
+                    ticks: {
+                        color: "#64748b",
+                        maxTicksLimit: 5,
+                        callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v)
+                    }
                 }
             }
         }
