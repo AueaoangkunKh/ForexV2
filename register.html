@@ -1,271 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Create Account</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Register | Trading Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="Logo1.png">
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body {
             height: 100vh;
             background: #020617;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.12) 0%, transparent 45%);
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            color: #f8fafc;
         }
-
-        /* Particle */
-
-        .particle {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.4;
-            animation: float linear infinite;
+        .grid-bg {
+            position: fixed; inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
         }
-
-        @keyframes float {
-            0% {
-                transform: translateY(0)
-            }
-
-            100% {
-                transform: translateY(-100vh)
-            }
-        }
-
-        /* Glass Card */
-
         .card {
-
-            width: 380px;
-            padding: 45px;
-
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-
-            border-radius: 20px;
-
-            box-shadow:
-                0 10px 40px rgba(0, 0, 0, 0.5),
-                inset 0 0 20px rgba(255, 255, 255, 0.05);
-
-            color: white;
-
-            animation: fade 1s ease;
-
+            position: relative;
+            width: 400px;
+            padding: 40px 36px;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: fade 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1;
         }
-
-        @keyframes fade {
-            from {
-                opacity: 0;
-                transform: translateY(30px)
-            }
-
-            to {
-                opacity: 1
-            }
+        @keyframes fade { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: none; } }
+        .brand-logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; }
+        .brand-logo img {
+            width: 84px; height: 84px; object-fit: contain;
+            filter: drop-shadow(0 0 18px rgba(56, 189, 248, 0.45));
+            margin-bottom: 12px;
         }
-
-        .logo {
-            text-align: center;
-            font-size: 26px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
+        .title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
         .subtitle {
-            text-align: center;
-            opacity: 0.7;
-            margin-bottom: 25px;
-            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; color: #38bdf8; margin-top: 4px;
+            letter-spacing: 1px; text-transform: uppercase;
         }
-
-        /* Inputs */
-
-        .input-group {
-            margin-bottom: 18px;
-        }
-
+        .input-group { margin-bottom: 16px; }
         input {
-
-            width: 100%;
-            padding: 13px;
-
-            border: none;
-            border-radius: 10px;
-
-            background: rgba(255, 255, 255, 0.12);
-            color: white;
-
-            outline: none;
-
-            transition: 0.3s;
-
+            width: 100%; padding: 13px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px; background: rgba(2, 6, 23, 0.7);
+            color: white; font-size: 14px; outline: none; transition: 0.25s;
         }
-
-        input:focus {
-
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
-
-        }
-
-        /* Button */
-
+        input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
         button {
-            width: 100%;
-            padding: 13px;
-            border: none;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #38bdf8, #6366f1);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
+            width: 100%; padding: 13px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #22c55e, #10b981);
+            color: #020617; font-weight: 700; font-size: 14px;
+            cursor: pointer; transition: 0.25s; margin-top: 6px;
         }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.6);
-
-        }
-
-        /* message */
-
-        #msg {
-
-            margin-top: 15px;
-            text-align: center;
-            font-size: 14px;
-
-        }
-
-        /* link */
-
-        .link {
-
-            margin-top: 20px;
-            text-align: center;
-            font-size: 14px;
-
-        }
-
-        a {
-            color: #38bdf8;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        /* mobile */
-
-        @media(max-width:500px) {
-
-            .card {
-                width: 90%;
-            }
-
-        }
-
-        #msg {
-            margin-top: 12px;
-            text-align: center;
-            font-size: 14px;
-            color: #22c55e;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0
-            }
-
-            to {
-                opacity: 1
-            }
-        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        #msg { margin-top: 14px; text-align: center; font-size: 13px; min-height: 18px; }
+        .link { margin-top: 18px; text-align: center; font-size: 13px; color: #94a3b8; }
+        a { color: #38bdf8; text-decoration: none; font-weight: 600; }
+        a:hover { text-decoration: underline; }
+        @media(max-width: 460px) { .card { width: 92%; padding: 32px 24px; } }
     </style>
-
 </head>
-
 <body>
-
-    <div class="card">
-
-        <div class="logo">Create Account</div>
-        <div class="subtitle">Start your trading journal</div>
-
-        <div class="input-group">
-            <input id="username" placeholder="Username">
+    <div class="grid-bg"></div>
+    <form class="card" onsubmit="event.preventDefault(); register();">
+        <div class="brand-logo">
+            <img src="Logo1.png" alt="Bull vs Bear">
+            <div class="title">CREATE ACCOUNT</div>
+            <div class="subtitle">Initialize Trader Profile</div>
         </div>
 
         <div class="input-group">
-            <input id="password" type="password" placeholder="Password">
+            <input id="username" placeholder="Choose Username" required>
+        </div>
+        <div class="input-group">
+            <input id="password" type="password" placeholder="Choose Password" required>
         </div>
 
-        <button id="registerBtn" onclick="register()">
-            <span id="btnText">Register</span>
-            <span id="loader" style="display:none;">⏳ Creating...</span>
-        </button>
-
+        <button id="registerBtn" type="submit">Register Account</button>
         <div id="msg"></div>
-
-        <div class="link">
-            Already have account?
-            <a href="login.html">Login</a>
-        </div>
-
-    </div>
-
-    <script>
-
-        /* particle background */
-
-        for (let i = 0; i < 70; i++) {
-
-            let p = document.createElement("div")
-
-            p.className = "particle"
-
-            p.style.left = Math.random() * 100 + "%"
-
-            p.style.animationDuration = (6 + Math.random() * 10) + "s"
-
-            p.style.opacity = Math.random()
-
-            document.body.appendChild(p)
-
-        }
-
-    </script>
+        <div class="link">Already registered? <a href="login.html">Back to Login</a></div>
+    </form>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
     <script src="js/app.js"></script>
-
 </body>
-
 </html>

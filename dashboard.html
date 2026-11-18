@@ -1,132 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <!-- ปรับ viewport ให้รองรับ responsive บนมือถือเต็มรูปแบบ -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trading Dashboard</title>
+    <title>Trading Terminal | Dashboard</title>
 
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="Logo1.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
 <body>
+    <div class="grid-bg"></div>
 
     <div class="container">
-
+        <!-- HEADER -->
         <header>
-            <div class="logo">
-                📊 <span>Trading Journal</span>
+            <div class="logo-area">
+                <img src="Logo1.png" alt="Logo" class="header-logo">
+                <div>
+                    <div class="logo-title">TRADING TERMINAL</div>
+                    <div class="logo-sub" id="welcomeUser">OPERATOR: TRADER</div>
+                </div>
             </div>
 
             <div class="header-right">
-                <div class="status-dot"></div>
-                <div class="status-text">LIVE</div>
+                <!-- GAMIFICATION BADGE -->
+                <div id="streakBadge" class="streak-badge" title="Current Winning Days Streak">
+                    🔥 0 Day Streak
+                </div>
 
-                <button class="share-btn" onclick="openSummaryModal()">
-                    📸 Share
-                </button>
+                <div class="live-pill">
+                    <span class="status-dot"></span>
+                    <span>LIVE</span>
+                </div>
 
-                <button class="reset-btn" onclick="resetTrades()">
-                    Reset
-                </button>
-
-                <button class="logout-btn" onclick="logout()">
-                    Logout
-                </button>
+                <button class="share-btn" onclick="openSummaryModal()">📸 Share</button>
+                <button class="reset-btn" onclick="resetTrades()">Reset</button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </header>
 
-        <!-- STATS GRID -->
-        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
-            <!-- BALANCE & DEPOSIT/WITHDRAW CARD -->
+        <!-- TOP KPI STATS (5 CARDS) -->
+        <div class="stats-grid">
             <div class="stat-card balance-card">
-                <h3>Current Balance</h3>
-                <p id="totalBalance" style="color: #38bdf8;">$0.00</p>
+                <div class="stat-top">
+                    <h3>Current Balance</h3>
+                    <span class="badge-tag">CAPITAL</span>
+                </div>
+                <p id="totalBalance" class="mono-num" style="color: #38bdf8;">$0.00</p>
                 <div class="trans-btn-group">
                     <button class="trans-btn dep-btn" onclick="openTransactionModal('deposit')">➕ ฝาก</button>
                     <button class="trans-btn wth-btn" onclick="openTransactionModal('withdraw')">➖ ถอน</button>
                 </div>
             </div>
 
-            <div class="stat-card">
-                <h3>Total PnL</h3>
-                <p id="totalPnL">$0</p>
+            <div class="stat-card" id="pnlCardGlow">
+                <div class="stat-top">
+                    <h3>Net Profit / Loss</h3>
+                    <span class="badge-tag">PNL</span>
+                </div>
+                <p id="totalPnL" class="mono-num">$0.00</p>
+                <div class="stat-sub" id="roiPercent">ROI: 0.0%</div>
             </div>
 
             <div class="stat-card">
-                <h3>Winrate</h3>
-                <p id="winrate">0%</p>
+                <div class="stat-top">
+                    <h3>Winrate</h3>
+                    <span class="badge-tag">ACCURACY</span>
+                </div>
+                <p id="winrate" class="mono-num">0.0%</p>
+                <div class="stat-sub" id="winLossCount">0W / 0L Days</div>
             </div>
 
             <div class="stat-card">
-                <h3>Total Trades</h3>
-                <p id="totalTrades">0</p>
+                <div class="stat-top">
+                    <h3>Total Executions</h3>
+                    <span class="badge-tag">VOLUME</span>
+                </div>
+                <p id="totalTrades" class="mono-num">0</p>
+                <div class="stat-sub" id="avgTradesDay">Avg 0.0 / day</div>
             </div>
 
             <div class="stat-card">
-                <h3>Max Drawdown</h3>
-                <p id="maxDD">$0</p>
+                <div class="stat-top">
+                    <h3>Max Drawdown</h3>
+                    <span class="badge-tag">RISK</span>
+                </div>
+                <p id="maxDD" class="mono-num" style="color: #f87171;">$0.00</p>
+                <div class="stat-sub">Peak-to-Valley</div>
             </div>
         </div>
 
-        <!-- MAIN GRID -->
-        <div class="grid">
-
-            <!-- EQUITY CURVE & ANALYTICS -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>📈 Equity Curve</h2>
+        <!-- BENTO MAIN GRID -->
+        <div class="bento-grid">
+            <!-- EQUITY CURVE (SPAN 2 COLUMNS) -->
+            <div class="card bento-wide">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>📈 Equity Curve & Performance</h2>
+                        <span class="card-desc">Cumulative net growth with $0 break-even baseline</span>
+                    </div>
+                    <!-- TIMEFRAME FILTER -->
+                    <div class="tf-toggle">
+                        <button class="tf-btn" onclick="setEquityFilter('7d', this)">7D</button>
+                        <button class="tf-btn" onclick="setEquityFilter('30d', this)">30D</button>
+                        <button class="tf-btn" onclick="setEquityFilter('month', this)">This Month</button>
+                        <button class="tf-btn active" onclick="setEquityFilter('all', this)">ALL</button>
+                    </div>
                 </div>
 
-                <div style="position: relative; height: 220px; width: 100%;">
+                <div class="chart-wrapper-tall">
                     <canvas id="equityChart"></canvas>
                 </div>
 
                 <div class="analytics">
                     <div class="analytic-box">
                         <p>Profit Factor</p>
-                        <h3 id="profitFactor">0</h3>
+                        <h3 id="profitFactor">0.00</h3>
                     </div>
-
                     <div class="analytic-box">
-                        <p>Risk Reward</p>
-                        <h3 id="riskReward">0</h3>
+                        <p>Risk / Reward</p>
+                        <h3 id="riskReward">0.00</h3>
                     </div>
-
                     <div class="analytic-box">
                         <p>Expectancy</p>
-                        <h3 id="expectancy">0</h3>
+                        <h3 id="expectancy">$0.00</h3>
                     </div>
-
                     <div class="analytic-box">
-                        <p>Strategy Score</p>
-                        <h3 id="strategyScore">0</h3>
+                        <p>Terminal Score</p>
+                        <h3 id="strategyScore">0.0</h3>
                     </div>
                 </div>
             </div>
 
-            <!-- WINRATE CHART -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>📊 Winrate Chart</h2>
-                </div>
-                <canvas id="winChart"></canvas>
-            </div>
-
-            <!-- PNL DISTRIBUTION -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>📉 PnL Distribution</h2>
-                </div>
-                <canvas id="pnlChart"></canvas>
-            </div>
-
-            <!-- CALENDAR & LIST VIEW CARD -->
-            <div class="card calendar-card">
+            <!-- CALENDAR & LIST VIEW (SPAN 2 COLUMNS ON DESKTOP OR RIGHT SIDE) -->
+            <div class="card bento-tall calendar-card">
                 <div class="calendar-header">
                     <div class="month-nav">
                         <button onclick="prevMonth()">◀</button>
@@ -134,15 +143,12 @@
                         <button onclick="nextMonth()">▶</button>
                     </div>
 
-                    <!-- เพิ่มปุ่ม Toggle สลับ Calendar / List -->
                     <div class="view-toggle">
-                        <button id="btnCalendarView" class="toggle-btn active" onclick="switchView('calendar')">📅
-                            Calendar</button>
+                        <button id="btnCalendarView" class="toggle-btn active" onclick="switchView('calendar')">📅 Calendar</button>
                         <button id="btnListView" class="toggle-btn" onclick="switchView('list')">📋 List</button>
                     </div>
                 </div>
 
-                <!-- CALENDAR VIEW -->
                 <div id="calendarContainer">
                     <div class="calendar-weekdays">
                         <div class="weekend-header">อา.</div>
@@ -153,46 +159,56 @@
                         <div>ศ.</div>
                         <div class="weekend-header">ส.</div>
                     </div>
-
                     <div class="calendar" id="calendar"></div>
                 </div>
 
-                <!-- LIST VIEW (ซ่อนไว้เริ่มต้น) -->
                 <div id="listContainer" style="display: none;">
                     <div class="trade-list-header">
                         <span>วันที่</span>
                         <span>PnL ($)</span>
-                        <span>สถานะ</span>
+                        <span>จำนวนไม้</span>
                     </div>
                     <div id="tradeList" class="trade-list"></div>
                 </div>
             </div>
 
-        </div>
+            <!-- WINRATE CHART -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🎯 Winrate Progression</h2>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="winChart"></canvas>
+                </div>
+            </div>
 
+            <!-- PNL DISTRIBUTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📊 Daily PnL Distribution</h2>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="pnlChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- TRADE MODAL -->
     <div class="modal" id="tradeModal">
         <div class="modal-content">
-            <h2>Add Trade</h2>
-            <p id="modalDate"></p>
+            <h2>Log Daily Result</h2>
+            <p id="modalDate" class="mono-num"></p>
 
-            <!-- PnL Type Selector (+ / -) -->
             <div class="pnl-type-toggle">
-                <button type="button" id="btnWin" class="type-btn win active" onclick="setPnLType('win')">
-                    + กำไร
-                </button>
-                <button type="button" id="btnLoss" class="type-btn loss" onclick="setPnLType('loss')">
-                    - ขาดทุน
-                </button>
+                <button type="button" id="btnWin" class="type-btn win active" onclick="setPnLType('win')">+ กำไร</button>
+                <button type="button" id="btnLoss" class="type-btn loss" onclick="setPnLType('loss')">- ขาดทุน</button>
             </div>
 
             <input id="pnlInput" placeholder="Enter amount ($)" type="number" step="any" oninput="updatePnLSign()">
-            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1"
-                style="margin-top: 10px;">
+            <input id="tradesCountInput" placeholder="Total Trades (เช่น 1, 2, 3)" type="number" min="1" style="margin-top: 10px;">
 
-            <div class="modal-buttons" style="margin-top: 15px;">
+            <div class="modal-buttons" style="margin-top: 16px;">
                 <button class="save" id="saveTrade">Save</button>
                 <button class="delete" id="deleteTrade">Delete</button>
                 <button class="cancel" onclick="closeModal()">Cancel</button>
@@ -200,15 +216,13 @@
         </div>
     </div>
 
-    <!-- TRANSACTION MODAL (ฝาก/ถอน) -->
+    <!-- TRANSACTION MODAL -->
     <div class="modal" id="transactionModal">
         <div class="modal-content">
             <h2 id="transModalTitle">ฝากเงิน</h2>
-            <p style="opacity: 0.7; font-size: 12px; margin-bottom: 12px;">ระบุจำนวนเงินที่ต้องการฝาก/ถอน</p>
-
+            <p style="opacity: 0.7; font-size: 12px; margin-bottom: 12px;">ระบุจำนวนเงินที่ต้องการทำรายการ</p>
             <input id="transAmountInput" placeholder="Enter amount ($)" type="number" step="any" min="0.01">
-
-            <div class="modal-buttons" style="margin-top: 15px;">
+            <div class="modal-buttons" style="margin-top: 16px;">
                 <button class="save" onclick="saveTransaction()">Save</button>
                 <button class="cancel" onclick="closeTransactionModal()">Cancel</button>
             </div>
@@ -218,9 +232,8 @@
     <!-- DELETE CONFIRM -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
-            <h2>Delete Trade</h2>
-            <p>Are you sure?</p>
-
+            <h2>Delete Record</h2>
+            <p>ยืนยันการลบข้อมูลเทรดของวันนี้?</p>
             <div class="modal-buttons">
                 <button class="delete" id="confirmDeleteBtn">Delete</button>
                 <button class="cancel" id="cancelDeleteBtn">Cancel</button>
@@ -231,77 +244,89 @@
     <!-- RESET CONFIRM -->
     <div class="modal" id="resetModal">
         <div class="modal-content">
-            <h2>Reset All Trades</h2>
-            <p>This will delete all trades and transactions</p>
-
+            <h2>Reset Terminal</h2>
+            <p>ข้อมูลเทรดและการฝาก-ถอนทั้งหมดจะถูกลบถาวร</p>
             <div class="modal-buttons">
-                <button class="delete" id="confirmResetBtn">Reset</button>
+                <button class="delete" id="confirmResetBtn">Reset All</button>
                 <button class="cancel" id="cancelResetBtn">Cancel</button>
             </div>
         </div>
     </div>
 
     <!-- TOAST -->
-    <div class="toast" id="toast">
-        <span id="toastText"></span>
-    </div>
+    <div class="toast" id="toast"><span id="toastText"></span></div>
 
-    <!-- SHARE SUMMARY MODAL -->
+    <!-- SHARE SUMMARY MODAL (PROP FIRM STYLE + THEME SWITCHER + MINI CHART) -->
     <div class="modal" id="summaryModal">
-        <div class="modal-content">
-            <h2 style="margin-top: 0; margin-bottom: 4px; font-size: 18px;">Trade Summary Card</h2>
-            <p style="margin-bottom: 16px; font-size: 12px; opacity: 0.6;">Preview & Copy image to clipboard</p>
+        <div class="modal-content summary-modal-box">
+            <h2 style="margin-bottom: 4px; font-size: 18px;">Performance Certificate</h2>
+            <p style="margin-bottom: 12px; font-size: 12px; opacity: 0.6;">เลือกธีมการ์ดแล้วกด Copy เพื่อแชร์</p>
 
-            <!-- การ์ดสรุปผล -->
-            <div id="summaryCard" class="summary-card-export">
+            <!-- CARD THEME SELECTOR -->
+            <div class="card-theme-bar">
+                <button class="theme-chip active" onclick="setShareTheme('cyber', this)">🌌 Cyber Dark</button>
+                <button class="theme-chip" onclick="setShareTheme('gold', this)">👑 Gold VIP</button>
+                <button class="theme-chip" onclick="setShareTheme('minimal', this)">🤍 Obsidian Clean</button>
+            </div>
+
+            <!-- EXPORTABLE CARD -->
+            <div id="summaryCard" class="summary-card-export theme-cyber">
+                <img src="Logo1.png" class="summary-watermark" alt="">
+
                 <div class="summary-card-header">
-                    <div class="summary-brand">
-                        👤 <span id="summaryUsername">Trader</span>
+                    <div class="summary-brand-wrap">
+                        <img src="Logo1.png" class="summary-logo-mini" alt="Logo">
+                        <div>
+                            <div class="summary-brand" id="summaryUsername">TRADER</div>
+                            <div class="summary-sub-tag">VERIFIED JOURNAL</div>
+                        </div>
                     </div>
-                    <div id="summaryDate" class="summary-date">สิงหาคม 2026</div>
+                    <div id="summaryDate" class="summary-date">Nov 2026</div>
                 </div>
 
-                <div class="summary-card-body">
-                    <div class="summary-main-stat">
-                        <span class="label">Net Profit / Loss</span>
-                        <h1 id="sumTotalPnL">$0.00</h1>
-                    </div>
+                <div class="summary-main-stat">
+                    <span class="label">NET PROFIT / LOSS</span>
+                    <h1 id="sumTotalPnL">$0.00</h1>
+                </div>
 
-                    <div class="summary-grid">
-                        <div class="sum-box">
-                            <span>Winrate</span>
-                            <strong id="sumWinrate">0%</strong>
-                        </div>
-                        <div class="sum-box">
-                            <span>Profit Factor</span>
-                            <strong id="sumPF">0.00</strong>
-                        </div>
-                        <div class="sum-box">
-                            <span>Total Trades</span>
-                            <strong id="sumTrades">0</strong>
-                        </div>
-                        <div class="sum-box">
-                            <span>Max DD</span>
-                            <strong id="sumMaxDD">$0.00</strong>
-                        </div>
+                <!-- MINI EQUITY SPARKLINE -->
+                <div class="mini-chart-box">
+                    <canvas id="shareMiniChart"></canvas>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="sum-box">
+                        <span>WINRATE</span>
+                        <strong id="sumWinrate">0%</strong>
+                    </div>
+                    <div class="sum-box">
+                        <span>PROFIT FACTOR</span>
+                        <strong id="sumPF">0.00</strong>
+                    </div>
+                    <div class="sum-box">
+                        <span>TOTAL TRADES</span>
+                        <strong id="sumTrades">0</strong>
+                    </div>
+                    <div class="sum-box">
+                        <span>MAX DRAWDOWN</span>
+                        <strong id="sumMaxDD">$0.00</strong>
                     </div>
                 </div>
 
                 <div class="summary-card-footer">
-                    <span>Verified Trading Journal</span>
+                    <span>BULL vs BEAR TERMINAL • PERFORMANCE REPORT</span>
                 </div>
             </div>
 
-            <div class="modal-buttons" style="margin-top: 18px; width: 100%; display: flex; gap: 8px;">
+            <div class="modal-buttons" style="margin-top: 16px; width: 100%; display: flex; gap: 8px;">
                 <button class="save" style="flex: 1;" onclick="copySummaryImage()">📋 Copy Image</button>
                 <button class="cancel" style="flex: 1;" onclick="closeSummaryModal()">Close</button>
             </div>
         </div>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
 </body>
-
 </html>

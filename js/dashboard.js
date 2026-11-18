@@ -1,263 +1,281 @@
-const supabaseUrl = "https://nkhedvvqjqufwblslzmf.supabase.co"
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5raGVkdnZxanF1ZndibHNsem1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NzIwNDgsImV4cCI6MjA4ODU0ODA0OH0.S95sIjZr1WzR1isWh8WNM0uRFxdUQCZm7cNOb2kyeuY"
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location = "login.html";
 
-const client = supabase.createClient(supabaseUrl, supabaseKey)
+let equityChart = null;
+let winChart = null;
+let pnlChart = null;
+let shareMiniChart = null;
 
-/* ======================
-USER SESSION
-====================== */
+let currentDate = new Date();
+let selectedDate = null;
+let currentTradesData = [];
+let currentEquityFilter = "all";
+let currentPnLType = "win";
+let currentTransType = "deposit";
 
-const user = JSON.parse(localStorage.getItem("user"))
+// แสดงชื่อ Operator บน Header
+document.addEventListener("DOMContentLoaded", async () => {
+    const welcomeEl = document.getElementById("welcomeUser");
+    if (welcomeEl && user?.username) {
+        welcomeEl.innerText = `OPERATOR: ${user.username.toUpperCase()}`;
+    }
 
-if (!user) {
-    window.location = "login.html"
-}
+    await refreshDashboard();
 
-/* ======================
-GLOBAL VARIABLES
-====================== */
-
-let equityChart = null
-let winChart = null
-let pnlChart = null
-
-let currentDate = new Date()
-let selectedDate = null
-let currentTradesData = [] // เก็บข้อมูล CacheTrades ไว้ใช้งานใน List View
-let currentPnLType = "win"; // ค่าเริ่มต้นเป็นกำไร (+)
-let currentTransType = "deposit"; // deposit หรือ withdraw
-
-/* ======================
-LOGOUT
-====================== */
+    document.getElementById("saveTrade").onclick = saveTrade;
+    document.getElementById("deleteTrade").onclick = () => document.getElementById("confirmModal").style.display = "flex";
+    document.getElementById("confirmDeleteBtn").onclick = deleteTrade;
+    document.getElementById("cancelDeleteBtn").onclick = () => document.getElementById("confirmModal").style.display = "none";
+    document.getElementById("confirmResetBtn").onclick = confirmReset;
+    document.getElementById("cancelResetBtn").onclick = () => document.getElementById("resetModal").style.display = "none";
+});
 
 function logout() {
-    localStorage.removeItem("user")
-    window.location = "login.html"
+    localStorage.removeItem("user");
+    window.location = "login.html";
 }
 
 /* ======================
-VIEW SWITCHER (UX/UI ENHANCEMENT)
+   ANIMATED NUMBER COUNTER
 ====================== */
+function animateValue(elementId, endValue, prefix = "", suffix = "", decimals = 2) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
 
+    const duration = 650;
+    const startTime = performance.now();
+    const startValue = 0;
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const current = startValue + (endValue - startValue) * easeOut;
+
+        const sign = current < 0 ? "-" : "";
+        el.innerText = `${sign}${prefix}${Math.abs(current).toFixed(decimals)}${suffix}`;
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            const finalSign = endValue < 0 ? "-" : "";
+            el.innerText = `${finalSign}${prefix}${Math.abs(endValue).toFixed(decimals)}${suffix}`;
+        }
+    }
+    requestAnimationFrame(update);
+}
+
+/* ======================
+   VIEW & FILTER SWITCHERS
+====================== */
 function switchView(viewType) {
-    const calendarCont = document.getElementById("calendarContainer")
-    const listCont = document.getElementById("listContainer")
-    const btnCal = document.getElementById("btnCalendarView")
-    const btnList = document.getElementById("btnListView")
-
-    if (!calendarCont || !listCont) return
+    const calendarCont = document.getElementById("calendarContainer");
+    const listCont = document.getElementById("listContainer");
+    const btnCal = document.getElementById("btnCalendarView");
+    const btnList = document.getElementById("btnListView");
 
     if (viewType === "calendar") {
-        calendarCont.style.display = "block"
-        listCont.style.display = "none"
-        if (btnCal) btnCal.classList.add("active")
-        if (btnList) btnList.classList.remove("active")
+        calendarCont.style.display = "block";
+        listCont.style.display = "none";
+        btnCal.classList.add("active");
+        btnList.classList.remove("active");
     } else {
-        calendarCont.style.display = "none"
-        listCont.style.display = "block"
-        if (btnList) btnList.classList.add("active")
-        if (btnCal) btnCal.classList.remove("active")
-        renderListView()
+        calendarCont.style.display = "none";
+        listCont.style.display = "block";
+        btnList.classList.add("active");
+        btnCal.classList.remove("active");
+        renderListView();
     }
 }
 
-/* ======================
-RENDER LIST VIEW
-====================== */
+function setEquityFilter(filter, btnEl) {
+    currentEquityFilter = filter;
+    document.querySelectorAll(".tf-btn").forEach(b => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+    applyEquityFilterAndDraw();
+}
 
-function renderListView() {
-    const tradeList = document.getElementById("tradeList")
-    if (!tradeList) return
+// Helper แปลง YYYY-MM-DD เป็น Date แบบ Local Time เป๊ะๆ ไม่เพี้ยนตาม Timezone
+function parseLocalDate(dateStr) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d);
+}
 
-    tradeList.innerHTML = ""
-
+function applyEquityFilterAndDraw() {
     if (!currentTradesData || currentTradesData.length === 0) {
-        tradeList.innerHTML = `<div style="text-align:center; padding: 20px; opacity:0.5; font-size:12px;">No trade records found</div>`
-        return
+        drawEquity([], []);
+        return;
     }
 
-    // เรียงวันที่จากล่าสุดไปเก่าสุด
-    const sortedData = [...currentTradesData].sort((a, b) => new Date(b.date) - new Date(a.date))
+    // ยึดวันที่มีการเทรดล่าสุดเป็นจุดอ้างอิง (แทนวันที่ปัจจุบันที่อาจไม่มีรายการเทรด)
+    const latestTradeDate = parseLocalDate(currentTradesData[currentTradesData.length - 1].date);
+    let filtered = [...currentTradesData];
 
-    sortedData.forEach(trade => {
-        const pnl = Number(trade.pnl)
-        const isWin = pnl >= 0
-        const item = document.createElement("div")
-        item.className = `trade-item ${isWin ? "win-item" : "loss-item"}`
-        item.style.cursor = "pointer"
-        item.onclick = () => openModal(trade.date)
+    if (currentEquityFilter === "7d") {
+        const cutoff = new Date(latestTradeDate);
+        cutoff.setDate(latestTradeDate.getDate() - 6); // นับรวมวันล่าสุดเป็น 7 วัน
+        filtered = filtered.filter(t => parseLocalDate(t.date) >= cutoff);
+    } else if (currentEquityFilter === "30d") {
+        const cutoff = new Date(latestTradeDate);
+        cutoff.setDate(latestTradeDate.getDate() - 29); // นับรวมวันล่าสุดเป็น 30 วัน
+        filtered = filtered.filter(t => parseLocalDate(t.date) >= cutoff);
+    } else if (currentEquityFilter === "month") {
+        filtered = filtered.filter(t => {
+            const d = parseLocalDate(t.date);
+            return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+        });
+    }
+
+    let running = 0;
+    const labels = [];
+    const equity = [];
+
+    filtered.forEach(t => {
+        running += Number(t.pnl);
+        labels.push(t.date);
+        equity.push(running);
+    });
+
+    drawEquity(labels, equity);
+}
+
+/* ======================
+   LIST & CALENDAR RENDER
+====================== */
+function renderListView() {
+    const tradeList = document.getElementById("tradeList");
+    if (!tradeList) return;
+    tradeList.innerHTML = "";
+
+    if (!currentTradesData || currentTradesData.length === 0) {
+        tradeList.innerHTML = `<div style="text-align:center; padding: 24px; opacity:0.5; font-size:12px;">No trade records found</div>`;
+        return;
+    }
+
+    const sorted = [...currentTradesData].sort((a, b) => new Date(b.date) - new Date(a.date));
+    sorted.forEach(trade => {
+        const pnl = Number(trade.pnl);
+        const isWin = pnl >= 0;
+        const item = document.createElement("div");
+        item.className = `trade-item ${isWin ? "win-item" : "loss-item"}`;
+        item.style.cursor = "pointer";
+        item.onclick = () => openModal(trade.date);
 
         item.innerHTML = `
             <span>${trade.date}</span>
             <span style="font-weight:700; color: ${isWin ? '#4ade80' : '#f87171'}">
-                ${isWin ? '+' : ''}$${pnl.toFixed(2)}
+                ${isWin ? '+' : '-'}$${Math.abs(pnl).toFixed(2)}
             </span>
-            <span style="font-size:11px; opacity:0.8;">
+            <span style="font-size:11px; color:#94a3b8;">
                 ${trade.trades_count || 1} ${trade.trades_count > 1 ? 'trades' : 'trade'}
             </span>
-        `
-        tradeList.appendChild(item)
-    })
+        `;
+        tradeList.appendChild(item);
+    });
 }
 
-/* ======================
-CALENDAR
-====================== */
-
 async function renderCalendar() {
-    const calendar = document.getElementById("calendar")
-    if (!calendar) return
-    calendar.innerHTML = ""
+    const calendar = document.getElementById("calendar");
+    if (!calendar) return;
+    calendar.innerHTML = "";
 
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
 
     document.getElementById("monthYear").innerText =
-        currentDate.toLocaleString("default", { month: "long" }) + " " + year
+        currentDate.toLocaleString("default", { month: "long" }) + " " + year;
 
-    const firstDay = new Date(year, month, 1).getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    const { data } = await client
-        .from("trades")
-        .select("*")
-        .eq("user_id", user.id)
+    const { data } = await client.from("trades").select("*").eq("user_id", user.id);
 
-    const tradeMap = {}
+    const tradeMap = {};
     if (data) {
         data.forEach(t => {
-            if (!tradeMap[t.date]) {
-                tradeMap[t.date] = { pnl: 0, count: 0 }
-            }
-            tradeMap[t.date].pnl += Number(t.pnl)
-            tradeMap[t.date].count += Number(t.trades_count || 1)
-        })
+            if (!tradeMap[t.date]) tradeMap[t.date] = { pnl: 0, count: 0 };
+            tradeMap[t.date].pnl += Number(t.pnl);
+            tradeMap[t.date].count += Number(t.trades_count || 1);
+        });
     }
 
-    // เติมช่องว่างด้านหน้า
     for (let i = 0; i < firstDay; i++) {
-        calendar.appendChild(document.createElement("div"))
+        calendar.appendChild(document.createElement("div"));
     }
 
-    // วนลูปสร้างกล่องวันที่
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateObj = new Date(year, month, day)
-        const dayOfWeek = dateObj.getDay()
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6)
+        const dateObj = new Date(year, month, day);
+        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-        const dateStr =
-            year + "-" +
-            String(month + 1).padStart(2, "0") + "-" +
-            String(day).padStart(2, "0")
-
-        const tradeInfo = tradeMap[dateStr]
-        const box = document.createElement("div")
-
-        box.className = "day"
+        const tradeInfo = tradeMap[dateStr];
+        const box = document.createElement("div");
+        box.className = "day";
 
         if (tradeInfo) {
-            const pnl = tradeInfo.pnl
-            const count = Math.abs(tradeInfo.count)
-
+            const pnl = tradeInfo.pnl;
+            const count = Math.abs(tradeInfo.count);
             box.innerHTML = `
                 <div class="day-number">${day}</div>
-                <div class="day-info">
-                    <div class="day-pnl">${(pnl > 0 ? "+" : "") + pnl.toFixed(2)}</div>
+                <div>
+                    <div class="day-pnl">${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toFixed(2)}</div>
                     <div class="day-count">${count} ${count > 1 ? 'trades' : 'trade'}</div>
                 </div>
-            `
-
-            if (pnl > 0) box.classList.add("win")
-            if (pnl < 0) box.classList.add("loss")
+            `;
+            if (pnl > 0) box.classList.add("win");
+            if (pnl < 0) box.classList.add("loss");
         } else {
-            box.innerHTML = `<div class="day-number">${day}</div>`
+            box.innerHTML = `<div class="day-number">${day}</div>`;
         }
 
         if (isWeekend) {
-            box.classList.add("disabled-day")
-            box.title = "Market Closed (Weekend)"
+            box.classList.add("disabled-day");
+            box.title = "Market Closed";
         } else {
-            box.onclick = () => openModal(dateStr)
+            box.onclick = () => openModal(dateStr);
         }
 
-        calendar.appendChild(box)
+        calendar.appendChild(box);
     }
 }
 
 /* ======================
-MODAL (TRADE & TRANSACTION)
+   MODALS & CRUD
 ====================== */
-
 function openModal(date) {
-    selectedDate = date
-    document.getElementById("modalDate").innerText = date
-    document.getElementById("tradeModal").style.display = "flex"
-    loadTrade(date)
+    selectedDate = date;
+    document.getElementById("modalDate").innerText = date;
+    document.getElementById("tradeModal").style.display = "flex";
+    loadTrade(date);
 }
 
-function closeModal() {
-    const modal = document.getElementById("tradeModal");
-    if (modal) {
-        modal.style.display = "none";
-    }
-}
+function closeModal() { document.getElementById("tradeModal").style.display = "none"; }
+function closeSummaryModal() { document.getElementById("summaryModal").style.display = "none"; }
 
-function closeSummaryModal() {
-    const summaryModal = document.getElementById("summaryModal");
-    if (summaryModal) {
-        summaryModal.style.display = "none";
-    }
-}
-
-/* --- TRANSACTION MODAL (DEPOSIT / WITHDRAW) --- */
 function openTransactionModal(type) {
     currentTransType = type;
-    const titleElem = document.getElementById("transModalTitle");
-    const inputElem = document.getElementById("transAmountInput");
-    
-    if (titleElem) {
-        titleElem.innerText = type === "deposit" ? "💵 ฝากเงิน (Deposit)" : "💸 ถอนเงิน (Withdraw)";
-    }
-    if (inputElem) {
-        inputElem.value = "";
-    }
-    
+    document.getElementById("transModalTitle").innerText = type === "deposit" ? "💵 ฝากเงิน (Deposit)" : "💸 ถอนเงิน (Withdraw)";
+    document.getElementById("transAmountInput").value = "";
     document.getElementById("transactionModal").style.display = "flex";
 }
 
-function closeTransactionModal() {
-    const transModal = document.getElementById("transactionModal");
-    if (transModal) {
-        transModal.style.display = "none";
-    }
-}
+function closeTransactionModal() { document.getElementById("transactionModal").style.display = "none"; }
 
-/* --- TRANSACTION FUNCTIONS --- */
 async function saveTransaction() {
     const amountVal = parseFloat(document.getElementById("transAmountInput").value);
-
     if (isNaN(amountVal) || amountVal <= 0) {
         showToast("กรุณากรอกจำนวนเงินให้ถูกต้อง", "error");
         return;
     }
 
-    // ดึง User ID จาก localStorage โดยตรง
-    const userId = user ? (user.id || user.email) : "default_user";
-
-    const { data, error } = await client
-        .from("transactions")
-        .insert([
-            {
-                user_id: String(userId),
-                type: currentTransType,
-                amount: amountVal
-            }
-        ]);
+    const { error } = await client.from("transactions").insert([{
+        user_id: String(user.id),
+        type: currentTransType,
+        amount: amountVal
+    }]);
 
     if (error) {
-        console.error("Supabase Error Detail:", error);
-        showToast("เกิดข้อผิดพลาด: " + (error.message || "บันทึกไม่ได้"), "error");
+        showToast("เกิดข้อผิดพลาดในการบันทึก", "error");
     } else {
         showToast(currentTransType === "deposit" ? "ฝากเงินสำเร็จ 🟢" : "ถอนเงินสำเร็จ 🔴", "success");
         closeTransactionModal();
@@ -266,23 +284,10 @@ async function saveTransaction() {
 }
 
 async function getTotalCapital() {
-    const userId = user ? (user.id || user.email) : "default_user";
-
-    const { data, error } = await client
-        .from("transactions")
-        .select("*")
-        .eq("user_id", String(userId));
-
+    const { data, error } = await client.from("transactions").select("*").eq("user_id", String(user.id));
     if (error || !data) return 0;
-
-    return data.reduce((acc, curr) => {
-        return curr.type === "deposit" ? acc + Number(curr.amount) : acc - Number(curr.amount);
-    }, 0);
+    return data.reduce((acc, curr) => curr.type === "deposit" ? acc + Number(curr.amount) : acc - Number(curr.amount), 0);
 }
-
-/* ======================
-LOAD TRADE
-====================== */
 
 function setPnLType(type) {
     currentPnLType = type;
@@ -293,13 +298,11 @@ function setPnLType(type) {
     if (type === "win") {
         btnWin.classList.add("active");
         btnLoss.classList.remove("active");
-        if (pnlInput && pnlInput.value) {
-            pnlInput.value = Math.abs(parseFloat(pnlInput.value) || 0);
-        }
+        if (pnlInput.value) pnlInput.value = Math.abs(parseFloat(pnlInput.value) || 0);
     } else {
         btnLoss.classList.add("active");
         btnWin.classList.remove("active");
-        if (pnlInput && pnlInput.value) {
+        if (pnlInput.value) {
             const absVal = Math.abs(parseFloat(pnlInput.value) || 0);
             pnlInput.value = absVal > 0 ? -absVal : "";
         }
@@ -308,35 +311,20 @@ function setPnLType(type) {
 
 function updatePnLSign() {
     const pnlInput = document.getElementById("pnlInput");
-    if (!pnlInput || pnlInput.value === "") return;
-
-    let val = parseFloat(pnlInput.value);
+    if (!pnlInput.value) return;
+    const val = parseFloat(pnlInput.value);
     if (isNaN(val)) return;
-
-    if (currentPnLType === "loss" && val > 0) {
-        pnlInput.value = -val;
-    } else if (currentPnLType === "win" && val < 0) {
-        pnlInput.value = Math.abs(val);
-    }
+    if (currentPnLType === "loss" && val > 0) pnlInput.value = -val;
+    if (currentPnLType === "win" && val < 0) pnlInput.value = Math.abs(val);
 }
 
 async function loadTrade(date) {
-    const { data } = await client
-        .from("trades")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("date", date);
-
+    const { data } = await client.from("trades").select("*").eq("user_id", user.id).eq("date", date);
     if (data && data.length > 0) {
         const pnl = Number(data[0].pnl);
         document.getElementById("pnlInput").value = pnl;
         document.getElementById("tradesCountInput").value = data[0].trades_count || 1;
-
-        if (pnl < 0) {
-            setPnLType("loss");
-        } else {
-            setPnLType("win");
-        }
+        setPnLType(pnl < 0 ? "loss" : "win");
     } else {
         document.getElementById("pnlInput").value = "";
         document.getElementById("tradesCountInput").value = "1";
@@ -344,270 +332,223 @@ async function loadTrade(date) {
     }
 }
 
-/* ======================
-SAVE TRADE
-====================== */
-
 async function saveTrade() {
-    const pnlInputVal = document.getElementById("pnlInput").value
-    const pnl = parseFloat(pnlInputVal)
-    const tradesCount = Math.abs(parseInt(document.getElementById("tradesCountInput").value)) || 1
+    const pnlInputVal = document.getElementById("pnlInput").value;
+    const pnl = parseFloat(pnlInputVal);
+    const tradesCount = Math.abs(parseInt(document.getElementById("tradesCountInput").value)) || 1;
 
     if (isNaN(pnl) || pnlInputVal.trim() === "") {
-        showToast("Invalid PnL number", "error")
-        return
+        showToast("กรุณากรอกตัวเลข PnL", "error");
+        return;
     }
 
-    const { data } = await client
-        .from("trades")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("date", selectedDate)
+    const { data } = await client.from("trades").select("*").eq("user_id", user.id).eq("date", selectedDate);
 
     if (data && data.length > 0) {
-        await client
-            .from("trades")
-            .update({
-                pnl: pnl,
-                trades_count: tradesCount
-            })
-            .eq("user_id", user.id)
-            .eq("date", selectedDate)
+        await client.from("trades").update({ pnl, trades_count: tradesCount }).eq("user_id", user.id).eq("date", selectedDate);
     } else {
-        await client
-            .from("trades")
-            .insert([
-                {
-                    user_id: user.id,
-                    date: selectedDate,
-                    pnl: pnl,
-                    trades_count: tradesCount
-                }
-            ])
+        await client.from("trades").insert([{ user_id: user.id, date: selectedDate, pnl, trades_count: tradesCount }]);
     }
 
-    closeModal()
-    showToast("Trade Saved 📈", "success")
-    await refreshDashboard()
-}
-
-/* ======================
-DELETE TRADE
-====================== */
-
-function showDeleteConfirm() {
-    document.getElementById("confirmModal").style.display = "flex"
+    closeModal();
+    showToast("Trade Saved 📈", "success");
+    await refreshDashboard();
 }
 
 async function deleteTrade() {
-    if (!selectedDate) return
-
-    await client
-        .from("trades")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("date", selectedDate)
-
-    document.getElementById("confirmModal").style.display = "none"
-    closeModal()
-    showToast("Trade Deleted", "error")
-    await refreshDashboard()
+    if (!selectedDate) return;
+    await client.from("trades").delete().eq("user_id", user.id).eq("date", selectedDate);
+    document.getElementById("confirmModal").style.display = "none";
+    closeModal();
+    showToast("Trade Deleted", "error");
+    await refreshDashboard();
 }
 
-/* ======================
-RESET
-====================== */
-
-function resetTrades() {
-    document.getElementById("resetModal").style.display = "flex"
-}
+function resetTrades() { document.getElementById("resetModal").style.display = "flex"; }
 
 async function confirmReset() {
-    document.body.classList.add("flash")
-    showToast("Resetting all trades & transactions...", "error")
-
-    // ลบ Trades ทั้งหมด
-    await client
-        .from("trades")
-        .delete()
-        .eq("user_id", user.id)
-
-    // ลบ Transactions ทั้งหมด
-    await client
-        .from("transactions")
-        .delete()
-        .eq("user_id", user.id)
-
-    document.getElementById("resetModal").style.display = "none"
-    await refreshDashboard()
+    await client.from("trades").delete().eq("user_id", user.id);
+    await client.from("transactions").delete().eq("user_id", user.id);
+    document.getElementById("resetModal").style.display = "none";
+    showToast("Terminal Reset Complete", "error");
+    await refreshDashboard();
 }
 
-/* ======================
-MONTH NAVIGATION
-====================== */
-
 function prevMonth() {
-    currentDate.setMonth(currentDate.getMonth() - 1)
-    renderCalendar()
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+    if (currentEquityFilter === "month") applyEquityFilterAndDraw();
 }
 
 function nextMonth() {
-    currentDate.setMonth(currentDate.getMonth() + 1)
-    renderCalendar()
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+    if (currentEquityFilter === "month") applyEquityFilterAndDraw();
 }
 
 /* ======================
-LOAD TRADES & METRICS
+   LOAD METRICS & STREAK
 ====================== */
-
 async function loadTrades() {
     const capital = await getTotalCapital();
+    const { data } = await client.from("trades").select("*").eq("user_id", user.id).order("date", { ascending: true });
 
-    const { data } = await client
-        .from("trades")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("date", { ascending: true })
-
-    currentTradesData = data || []
+    currentTradesData = data || [];
 
     if (!data || data.length === 0) {
-        document.getElementById("totalBalance").innerText = "$" + capital.toFixed(2);
-        document.getElementById("totalPnL").innerText = "$0.00"
-        document.getElementById("winrate").innerText = "0%"
-        document.getElementById("totalTrades").innerText = "0"
-        document.getElementById("maxDD").innerText = "$0.00"
+        animateValue("totalBalance", capital, "$", "", 2);
+        animateValue("totalPnL", 0, "$", "", 2);
+        animateValue("winrate", 0, "", "%", 1);
+        animateValue("totalTrades", 0, "", "", 0);
+        animateValue("maxDD", 0, "$", "", 2);
 
-        document.getElementById("profitFactor").innerText = "0.00"
-        document.getElementById("riskReward").innerText = "0.00"
-        document.getElementById("expectancy").innerText = "$0.00"
-        document.getElementById("strategyScore").innerText = "0.0"
+        document.getElementById("profitFactor").innerText = "0.00";
+        document.getElementById("riskReward").innerText = "0.00";
+        document.getElementById("expectancy").innerText = "$0.00";
+        document.getElementById("strategyScore").innerText = "0.0";
+        document.getElementById("streakBadge").innerText = "🔥 0 Day Streak";
+        document.getElementById("roiPercent").innerText = "ROI: 0.0%";
+        document.getElementById("winLossCount").innerText = "0W / 0L Days";
+        document.getElementById("avgTradesDay").innerText = "Avg 0.0 / day";
 
-        drawEquity([], [])
-        drawWin([], [])
-        drawPnL([], [])
-
-        if (document.getElementById("listContainer") && document.getElementById("listContainer").style.display !== "none") {
-            renderListView()
-        }
-        return
+        drawEquity([], []);
+        drawWin([], []);
+        drawPnL([], []);
+        return;
     }
 
-    let labels = []
-    let equity = []
-    let pnlList = []
+    let labels = [];
+    let pnlList = [];
+    let totalPnL = 0;
+    let totalTradesCount = 0;
+    let wins = 0;
+    let losses = 0;
+    let grossProfit = 0;
+    let grossLoss = 0;
+    let peak = 0;
+    let maxDD = 0;
 
-    let totalPnL = 0
-    let totalTradesCount = 0
-    let wins = 0
-    let losses = 0
-
-    let grossProfit = 0
-    let grossLoss = 0
-
-    let peak = 0
-    let maxDD = 0
+    // คำนวณ Win Streak ปัจจุบันจากวันล่าสุดย้อนกลับ
+    let currentStreak = 0;
+    for (let i = data.length - 1; i >= 0; i--) {
+        if (Number(data[i].pnl) > 0) currentStreak++;
+        else break;
+    }
 
     data.forEach(t => {
-        const pnl = Number(t.pnl)
-        const count = Number(t.trades_count || 1)
+        const pnl = Number(t.pnl);
+        const count = Number(t.trades_count || 1);
 
-        pnlList.push(pnl)
-        totalPnL += pnl
-        totalTradesCount += count
+        pnlList.push(pnl);
+        totalPnL += pnl;
+        totalTradesCount += count;
+        labels.push(t.date);
 
-        labels.push(t.date)
-        equity.push(totalPnL)
+        if (pnl > 0) { wins++; grossProfit += pnl; }
+        else if (pnl < 0) { losses++; grossLoss += Math.abs(pnl); }
 
-        if (pnl > 0) {
-            wins++
-            grossProfit += pnl
-        } else if (pnl < 0) {
-            losses++
-            grossLoss += Math.abs(pnl)
-        }
+        if (totalPnL > peak) peak = totalPnL;
+        const dd = peak - totalPnL;
+        if (dd > maxDD) maxDD = dd;
+    });
 
-        if (totalPnL > peak) peak = totalPnL
-        const dd = peak - totalPnL
-        if (dd > maxDD) maxDD = dd
-    })
+    const winrate = (wins / data.length) * 100;
+    const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : grossProfit;
+    const avgWin = wins > 0 ? (grossProfit / wins) : 0;
+    const avgLoss = losses > 0 ? (grossLoss / losses) : 0;
+    const riskReward = avgLoss > 0 ? (avgWin / avgLoss) : avgWin;
+    const expectancy = ((wins / data.length) * avgWin) - ((losses / data.length) * avgLoss);
 
-    const winrate = (wins / data.length) * 100
+    const pfScore = Math.min(profitFactor / 2, 1) * 40;
+    const wrScore = (winrate / 100) * 40;
+    const ddPenalty = peak > 0 ? Math.min(maxDD / peak, 1) * 20 : 0;
+    const strategyScore = Math.max(0, pfScore + wrScore + (20 - ddPenalty));
 
-    // ANALYTICS METRICS
-    const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : grossProfit
-    const avgWin = wins > 0 ? (grossProfit / wins) : 0
-    const avgLoss = losses > 0 ? (grossLoss / losses) : 0
-    const riskReward = avgLoss > 0 ? (avgWin / avgLoss) : avgWin
-
-    const winRateDec = wins / data.length
-    const lossRateDec = losses / data.length
-    const expectancy = (winRateDec * avgWin) - (lossRateDec * avgLoss)
-
-    let strategyScore = 0
-    if (data.length > 0) {
-        const pfScore = Math.min(profitFactor / 2, 1) * 40
-        const wrScore = (winrate / 100) * 40
-        const ddPenalty = peak > 0 ? Math.min(maxDD / peak, 1) * 20 : 0
-        strategyScore = Math.max(0, pfScore + wrScore + (20 - ddPenalty))
-    }
-
-    // UPDATE UI BALANCE & STATS
     const currentBalance = capital + totalPnL;
+    const roi = capital > 0 ? (totalPnL / capital) * 100 : 0;
+
+    // อัปเดตสีและ Ambient Glow
     const balanceElem = document.getElementById("totalBalance");
-    if (balanceElem) {
-        balanceElem.innerText = (currentBalance >= 0 ? "$" : "-$") + Math.abs(currentBalance).toFixed(2);
-        balanceElem.style.color = currentBalance >= 0 ? "#38bdf8" : "#f87171";
-    }
+    balanceElem.style.color = currentBalance >= 0 ? "#38bdf8" : "#f87171";
 
-    document.getElementById("totalPnL").innerText = "$" + totalPnL.toFixed(2)
-    document.getElementById("winrate").innerText = winrate.toFixed(1) + "%"
-    document.getElementById("totalTrades").innerText = totalTradesCount
-    document.getElementById("maxDD").innerText = "$" + maxDD.toFixed(2)
+    const pnlElem = document.getElementById("totalPnL");
+    const pnlCard = document.getElementById("pnlCardGlow");
+    pnlElem.style.color = totalPnL >= 0 ? "#4ade80" : "#f87171";
+    pnlCard.classList.remove("glow-win", "glow-loss");
+    if (totalPnL > 0) pnlCard.classList.add("glow-win");
+    if (totalPnL < 0) pnlCard.classList.add("glow-loss");
 
-    document.getElementById("profitFactor").innerText = profitFactor.toFixed(2)
-    document.getElementById("riskReward").innerText = riskReward.toFixed(2)
-    document.getElementById("expectancy").innerText = (expectancy >= 0 ? "$" : "-$") + Math.abs(expectancy).toFixed(2)
-    document.getElementById("strategyScore").innerText = strategyScore.toFixed(1)
+    // เรียกใช้ Animated Number Counter
+    animateValue("totalBalance", currentBalance, "$", "", 2);
+    animateValue("totalPnL", totalPnL, "$", "", 2);
+    animateValue("winrate", winrate, "", "%", 1);
+    animateValue("totalTrades", totalTradesCount, "", "", 0);
+    animateValue("maxDD", maxDD, "$", "", 2);
 
-    drawEquity(labels, equity)
-    drawWin(labels, pnlList)
-    drawPnL(labels, pnlList)
+    document.getElementById("roiPercent").innerText = `ROI: ${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
+    document.getElementById("winLossCount").innerText = `${wins}W / ${losses}L Days`;
+    document.getElementById("avgTradesDay").innerText = `Avg ${(totalTradesCount / data.length).toFixed(1)} / day`;
+    document.getElementById("streakBadge").innerText = `🔥 ${currentStreak} Day Streak`;
 
-    if (document.getElementById("listContainer") && document.getElementById("listContainer").style.display !== "none") {
-        renderListView()
+    document.getElementById("profitFactor").innerText = profitFactor.toFixed(2);
+    document.getElementById("riskReward").innerText = riskReward.toFixed(2);
+    document.getElementById("expectancy").innerText = (expectancy >= 0 ? "$" : "-$") + Math.abs(expectancy).toFixed(2);
+    document.getElementById("strategyScore").innerText = strategyScore.toFixed(1);
+
+    applyEquityFilterAndDraw();
+    drawWin(labels, pnlList);
+    drawPnL(labels, pnlList);
+
+    if (document.getElementById("listContainer").style.display !== "none") {
+        renderListView();
     }
 }
 
 /* ======================
-CHARTS
+   CHARTS (WITH BREAK-EVEN LINE)
 ====================== */
-
 function drawEquity(labels, data) {
     if (equityChart) equityChart.destroy();
     const ctx = document.getElementById("equityChart")?.getContext("2d");
     if (!ctx) return;
 
-    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-    gradient.addColorStop(0, "rgba(34, 197, 94, 0.4)");
-    gradient.addColorStop(1, "rgba(34, 197, 94, 0.0)");
+    const lastVal = data.length > 0 ? data[data.length - 1] : 0;
+    const isPositive = lastVal >= 0;
+    const lineColor = isPositive ? "#22c55e" : "#ef4444";
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 240);
+    gradient.addColorStop(0, isPositive ? "rgba(34, 197, 94, 0.35)" : "rgba(239, 68, 68, 0.35)");
+    gradient.addColorStop(1, "rgba(2, 6, 23, 0.0)");
+
+    const zeroLine = labels.map(() => 0);
 
     equityChart = new Chart(ctx, {
         type: "line",
         data: {
             labels,
-            datasets: [{
-                label: "Equity ($)",
-                data,
-                borderColor: "#22c55e",
-                borderWidth: 2.5,
-                backgroundColor: gradient,
-                fill: true,
-                tension: 0.3,
-                pointBackgroundColor: "#22c55e",
-                pointRadius: data.length === 1 ? 5 : 3,
-                pointHoverRadius: 6
-            }]
+            datasets: [
+                {
+                    label: "Equity ($)",
+                    data,
+                    borderColor: lineColor,
+                    borderWidth: 2.5,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.32,
+                    pointBackgroundColor: lineColor,
+                    pointRadius: data.length <= 2 ? 4 : 2.5,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: "Break-even ($0)",
+                    data: zeroLine,
+                    borderColor: "rgba(148, 163, 184, 0.35)",
+                    borderWidth: 1.2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -615,12 +556,13 @@ function drawEquity(labels, data) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    callbacks: { label: (ctx) => ` Equity: $${ctx.raw.toFixed(2)}` }
+                    filter: (item) => item.datasetIndex === 0,
+                    callbacks: { label: (c) => ` Net Equity: ${c.raw >= 0 ? '+' : '-'}$${Math.abs(c.raw).toFixed(2)}` }
                 }
             },
             scales: {
-                x: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8" } },
-                y: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8", callback: (v) => "$" + v }, beginAtZero: true }
+                x: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", maxTicksLimit: 8 } },
+                y: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v) } }
             }
         }
     });
@@ -632,10 +574,9 @@ function drawWin(labels, pnlList) {
     if (!ctx) return;
 
     let wins = 0;
-    let winrateData = [];
-    pnlList.forEach((pnl, i) => {
+    const winrateData = pnlList.map((pnl, i) => {
         if (pnl > 0) wins++;
-        winrateData.push(((wins / (i + 1)) * 100).toFixed(1));
+        return ((wins / (i + 1)) * 100).toFixed(1);
     });
 
     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
@@ -650,24 +591,20 @@ function drawWin(labels, pnlList) {
                 label: "Winrate (%)",
                 data: winrateData,
                 borderColor: "#38bdf8",
-                borderWidth: 2.5,
+                borderWidth: 2,
                 backgroundColor: gradient,
                 fill: true,
                 tension: 0.3,
-                pointBackgroundColor: "#38bdf8",
-                pointRadius: winrateData.length === 1 ? 5 : 3
+                pointRadius: 2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: (ctx) => ` Winrate: ${ctx.raw}%` } }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                x: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8" } },
-                y: { min: 0, max: 100, grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8", callback: (v) => v + "%" } }
+                x: { grid: { display: false }, ticks: { color: "#94a3b8", maxTicksLimit: 6 } },
+                y: { min: 0, max: 100, grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", callback: (v) => v + "%" } }
             }
         }
     });
@@ -678,22 +615,9 @@ function drawPnL(labels, data) {
     const ctx = document.getElementById("pnlChart")?.getContext("2d");
     if (!ctx) return;
 
-    const winGradient = ctx.createLinearGradient(0, 0, 0, 200);
-    winGradient.addColorStop(0, "rgba(34, 197, 94, 0.95)");
-    winGradient.addColorStop(1, "rgba(34, 197, 94, 0.2)");
-
-    const lossGradient = ctx.createLinearGradient(0, 0, 0, 200);
-    lossGradient.addColorStop(0, "rgba(239, 68, 68, 0.2)");
-    lossGradient.addColorStop(1, "rgba(239, 68, 68, 0.95)");
-
-    const formattedLabels = labels.map(dateStr => {
-        if (!dateStr) return '';
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-            return dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-        }
-        return dateStr;
+    const formattedLabels = labels.map(d => {
+        const p = d.split("-");
+        return p.length === 3 ? `${p[2]}/${p[1]}` : d;
     });
 
     pnlChart = new Chart(ctx, {
@@ -701,169 +625,120 @@ function drawPnL(labels, data) {
         data: {
             labels: formattedLabels,
             datasets: [{
-                label: "PnL ($)",
                 data,
-                backgroundColor: data.map(v => v >= 0 ? winGradient : lossGradient),
-                borderColor: data.map(v => v >= 0 ? "#22c55e" : "#ef4444"),
-                borderWidth: 1.5,
-                borderRadius: 6,
-                maxBarThickness: 38
+                backgroundColor: data.map(v => v >= 0 ? "rgba(34, 197, 94, 0.8)" : "rgba(239, 68, 68, 0.8)"),
+                borderRadius: 5,
+                maxBarThickness: 28
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => ctx.raw >= 0 ? ` PnL: +$${ctx.raw.toFixed(2)}` : ` PnL: -$${Math.abs(ctx.raw).toFixed(2)}`
-                    }
-                }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                x: { grid: { display: false }, ticks: { color: "#cbd5e1" } },
-                y: { grid: { color: "rgba(255, 255, 255, 0.05)" }, ticks: { color: "#94a3b8", callback: (v) => v >= 0 ? "$" + v : "-$" + Math.abs(v) } }
+                x: { grid: { display: false }, ticks: { color: "#94a3b8", maxTicksLimit: 8 } },
+                y: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", callback: (v) => "$" + v } }
             }
         }
     });
 }
 
 /* ======================
-REFRESH & INIT
+   SHARE CARD & MINI CHART
 ====================== */
+function setShareTheme(themeName, btnEl) {
+    const card = document.getElementById("summaryCard");
+    card.classList.remove("theme-cyber", "theme-gold", "theme-minimal");
+    card.classList.add(`theme-${themeName}`);
 
-async function refreshDashboard() {
-    await renderCalendar()
-    await loadTrades()
+    document.querySelectorAll(".theme-chip").forEach(c => c.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-    await refreshDashboard()
-    createParticles()
+function openSummaryModal() {
+    document.getElementById("summaryUsername").innerText = (user?.username || "TRADER").toUpperCase();
+    document.getElementById("summaryDate").innerText = document.getElementById("monthYear")?.innerText || "";
 
-    document.getElementById("saveTrade").onclick = saveTrade
-    document.getElementById("deleteTrade").onclick = showDeleteConfirm
-    document.getElementById("confirmDeleteBtn").onclick = deleteTrade
-    document.getElementById("cancelDeleteBtn").onclick = () => {
-        document.getElementById("confirmModal").style.display = "none"
-    }
-    document.getElementById("confirmResetBtn").onclick = confirmReset
-    document.getElementById("cancelResetBtn").onclick = () => {
-        document.getElementById("resetModal").style.display = "none"
-    }
-})
+    const totalPnLText = document.getElementById("totalPnL")?.innerText || "$0.00";
+    const sumPnLEl = document.getElementById("sumTotalPnL");
+    sumPnLEl.innerText = totalPnLText;
+    sumPnLEl.style.color = totalPnLText.includes("-") ? "#f87171" : "#4ade80";
 
-/* =========================
-TOAST & PARTICLES SYSTEM
-========================= */
-
-function showToast(text, type = "success") {
-    const toast = document.getElementById("toast")
-    const toastText = document.getElementById("toastText")
-    if (!toast || !toastText) return
-
-    toastText.innerText = text
-    toast.classList.remove("success", "error")
-    toast.classList.add(type, "show")
-
-    setTimeout(() => {
-        toast.classList.remove("show")
-    }, 3000)
-}
-
-function createParticles() {
-    for (let i = 0; i < 25; i++) {
-        const p = document.createElement("div")
-        p.className = "particle"
-        p.style.left = Math.random() * 100 + "%"
-        p.style.animationDuration = (10 + Math.random() * 20) + "s"
-        document.body.appendChild(p)
-    }
-}
-
-async function openSummaryModal() {
-    let displayName = "Trader";
-
-    try {
-        let currentUser = typeof user !== "undefined" ? user : null;
-        
-        if (!currentUser && typeof supabase !== "undefined") {
-            const { data } = await supabase.auth.getUser();
-            currentUser = data?.user;
-        }
-
-        if (currentUser) {
-            displayName = currentUser.user_metadata?.username || 
-                          currentUser.user_metadata?.full_name || 
-                          (currentUser.email ? currentUser.email.split("@")[0] : null);
-        }
-
-        if (!displayName || displayName === "Trader") {
-            const storedUser = localStorage.getItem("user") || localStorage.getItem("sb-user");
-            if (storedUser) {
-                const parsed = JSON.parse(storedUser);
-                displayName = parsed.username || parsed.email?.split("@")[0] || displayName;
-            }
-        }
-    } catch (e) {
-        console.log("Error fetching user info:", e);
-    }
-
-    document.getElementById("summaryUsername").innerText = displayName || "Trader";
-
-    const totalPnL = document.getElementById("totalPnL")?.innerText || "$0.00";
-    const winrate = document.getElementById("winrate")?.innerText || "0%";
-    const totalTrades = document.getElementById("totalTrades")?.innerText || "0";
-    const maxDD = document.getElementById("maxDD")?.innerText || "$0.00";
-    const profitFactor = document.getElementById("profitFactor")?.innerText || "0.00";
-    const monthYear = document.getElementById("monthYear")?.innerText || "";
-
-    document.getElementById("sumTotalPnL").innerText = totalPnL;
-    document.getElementById("sumWinrate").innerText = winrate;
-    document.getElementById("sumTrades").innerText = totalTrades;
-    document.getElementById("sumMaxDD").innerText = maxDD;
-    document.getElementById("sumPF").innerText = profitFactor;
-    document.getElementById("summaryDate").innerText = monthYear;
-
-    const pnlElem = document.getElementById("sumTotalPnL");
-    if (totalPnL.includes("-")) {
-        pnlElem.style.color = "#f87171";
-    } else {
-        pnlElem.style.color = "#4ade80";
-    }
+    document.getElementById("sumWinrate").innerText = document.getElementById("winrate")?.innerText || "0%";
+    document.getElementById("sumPF").innerText = document.getElementById("profitFactor")?.innerText || "0.00";
+    document.getElementById("sumTrades").innerText = document.getElementById("totalTrades")?.innerText || "0";
+    document.getElementById("sumMaxDD").innerText = document.getElementById("maxDD")?.innerText || "$0.00";
 
     document.getElementById("summaryModal").style.display = "flex";
+    drawShareMiniChart();
+}
+
+function drawShareMiniChart() {
+    if (shareMiniChart) shareMiniChart.destroy();
+    const ctx = document.getElementById("shareMiniChart")?.getContext("2d");
+    if (!ctx) return;
+
+    let running = 0;
+    const points = currentTradesData.map(t => {
+        running += Number(t.pnl);
+        return running;
+    });
+
+    if (points.length === 0) points.push(0, 0);
+    const isPos = points[points.length - 1] >= 0;
+
+    shareMiniChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: points.map((_, i) => i),
+            datasets: [{
+                data: points,
+                borderColor: isPos ? "#4ade80" : "#f87171",
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.35,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } }
+        }
+    });
 }
 
 async function copySummaryImage() {
     const card = document.getElementById("summaryCard");
     if (!card) return;
 
-    try {
-        if (typeof showToast === "function") showToast("Generating image...", "success");
+    showToast("Generating certificate...", "success");
+    const canvas = await html2canvas(card, { scale: 3, backgroundColor: null, useCORS: true });
 
-        const canvas = await html2canvas(card, {
-            scale: 3,
-            backgroundColor: null,
-            useCORS: true,
-            letterRendering: true,
-            logging: false
-        });
+    canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        try {
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+            showToast("Copied certificate to clipboard! 📋", "success");
+        } catch (err) {
+            const win = window.open();
+            win.document.write(`<img src="${canvas.toDataURL("image/png")}" style="max-width:100%;" />`);
+        }
+    });
+}
 
-        canvas.toBlob(async (blob) => {
-            if (!blob) return;
-            try {
-                const item = new ClipboardItem({ "image/png": blob });
-                await navigator.clipboard.write([item]);
-                if (typeof showToast === "function") showToast("Copied image to clipboard! 📋", "success");
-            } catch (err) {
-                const image = canvas.toDataURL("image/png");
-                const newWindow = window.open();
-                newWindow.document.write(`<img src="${image}" style="max-width:100%;" />`);
-            }
-        });
-    } catch (e) {
-        console.error(e);
-    }
+async function refreshDashboard() {
+    await renderCalendar();
+    await loadTrades();
+}
+
+function showToast(text, type = "success") {
+    const toast = document.getElementById("toast");
+    const toastText = document.getElementById("toastText");
+    toastText.innerText = text;
+    toast.classList.remove("success", "error");
+    toast.classList.add(type, "show");
+    setTimeout(() => toast.classList.remove("show"), 2800);
 }
