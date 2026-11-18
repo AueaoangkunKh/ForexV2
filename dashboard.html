@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trading Terminal | Dashboard</title>
+    <title>Trading Terminal | Pro Journal</title>
 
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="Logo1.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
     <div class="grid-bg"></div>
 
@@ -25,7 +27,6 @@
             </div>
 
             <div class="header-right">
-                <!-- GAMIFICATION BADGE -->
                 <div id="streakBadge" class="streak-badge" title="Current Winning Days Streak">
                     🔥 0 Day Streak
                 </div>
@@ -61,7 +62,7 @@
                     <span class="badge-tag">PNL</span>
                 </div>
                 <p id="totalPnL" class="mono-num">$0.00</p>
-                <div class="stat-sub" id="roiPercent">ROI: 0.0%</div>
+                <span class="stat-sub" id="roiPercent">ROI: +0.0%</span>
             </div>
 
             <div class="stat-card">
@@ -70,7 +71,7 @@
                     <span class="badge-tag">ACCURACY</span>
                 </div>
                 <p id="winrate" class="mono-num">0.0%</p>
-                <div class="stat-sub" id="winLossCount">0W / 0L Days</div>
+                <span class="stat-sub" id="winLossCount">0W / 0L Days</span>
             </div>
 
             <div class="stat-card">
@@ -79,7 +80,7 @@
                     <span class="badge-tag">VOLUME</span>
                 </div>
                 <p id="totalTrades" class="mono-num">0</p>
-                <div class="stat-sub" id="avgTradesDay">Avg 0.0 / day</div>
+                <span class="stat-sub" id="avgTradesDay">Avg 0.0 / day</span>
             </div>
 
             <div class="stat-card">
@@ -88,29 +89,28 @@
                     <span class="badge-tag">RISK</span>
                 </div>
                 <p id="maxDD" class="mono-num" style="color: #f87171;">$0.00</p>
-                <div class="stat-sub">Peak-to-Valley</div>
+                <span class="stat-sub">Peak to Valley</span>
             </div>
         </div>
 
-        <!-- BENTO MAIN GRID -->
-        <div class="bento-grid">
-            <!-- EQUITY CURVE (SPAN 2 COLUMNS) -->
-            <div class="card bento-wide">
+        <!-- 2x2 BALANCED GRID (ตามสัดส่วนรูปแรก) -->
+        <div class="quad-grid">
+            <!-- 1. TOP-LEFT: EQUITY CURVE -->
+            <div class="card">
                 <div class="card-header-flex">
                     <div>
-                        <h2>📈 Equity Curve & Performance</h2>
-                        <span class="card-desc">Cumulative net growth with $0 break-even baseline</span>
+                        <h2>📈 Equity Curve</h2>
+                        <p class="card-desc">Cumulative net growth ($0 baseline)</p>
                     </div>
-                    <!-- TIMEFRAME FILTER -->
                     <div class="tf-toggle">
                         <button class="tf-btn" onclick="setEquityFilter('7d', this)">7D</button>
                         <button class="tf-btn" onclick="setEquityFilter('30d', this)">30D</button>
-                        <button class="tf-btn" onclick="setEquityFilter('month', this)">This Month</button>
+                        <button class="tf-btn" onclick="setEquityFilter('month', this)">Month</button>
                         <button class="tf-btn active" onclick="setEquityFilter('all', this)">ALL</button>
                     </div>
                 </div>
 
-                <div class="chart-wrapper-tall">
+                <div class="chart-wrapper-equity">
                     <canvas id="equityChart"></canvas>
                 </div>
 
@@ -134,8 +134,57 @@
                 </div>
             </div>
 
-            <!-- CALENDAR & LIST VIEW (SPAN 2 COLUMNS ON DESKTOP OR RIGHT SIDE) -->
-            <div class="card bento-tall calendar-card">
+            <!-- 2. TOP-RIGHT: WIN / LOSS PERFORMANCE -->
+            <div class="card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>🎯 Win / Loss Performance</h2>
+                        <p class="card-desc">Accuracy & Average Payoff</p>
+                    </div>
+                    <span class="badge-tag" id="payoffBadge">PAYOFF 0.00R</span>
+                </div>
+
+                <div class="gauge-layout">
+                    <div class="gauge-wrapper">
+                        <canvas id="winChart"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="gaugeWinrate" class="mono-num">0.0%</span>
+                            <small>WINRATE</small>
+                        </div>
+                    </div>
+
+                    <div class="avg-compare-col">
+                        <div class="avg-box win-box">
+                            <span>AVG WIN DAY</span>
+                            <strong id="avgWinText" class="mono-num">+$0.00</strong>
+                        </div>
+                        <div class="avg-box loss-box">
+                            <span>AVG LOSS DAY</span>
+                            <strong id="avgLossText" class="mono-num">-$0.00</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. BOTTOM-LEFT: DAILY PNL DISTRIBUTION -->
+            <div class="card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>📊 Daily PnL Distribution</h2>
+                        <p class="card-desc">Net daily profit & loss breakdown</p>
+                    </div>
+                    <div class="best-worst-pills">
+                        <span class="bw-pill win" id="bestDayBadge">MAX +$0</span>
+                        <span class="bw-pill loss" id="worstDayBadge">MIN -$0</span>
+                    </div>
+                </div>
+                <div class="chart-wrapper-sub">
+                    <canvas id="pnlChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 4. BOTTOM-RIGHT: CALENDAR / LIST LOG -->
+            <div class="card calendar-card">
                 <div class="calendar-header">
                     <div class="month-nav">
                         <button onclick="prevMonth()">◀</button>
@@ -169,26 +218,6 @@
                         <span>จำนวนไม้</span>
                     </div>
                     <div id="tradeList" class="trade-list"></div>
-                </div>
-            </div>
-
-            <!-- WINRATE CHART -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>🎯 Winrate Progression</h2>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="winChart"></canvas>
-                </div>
-            </div>
-
-            <!-- PNL DISTRIBUTION -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>📊 Daily PnL Distribution</h2>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="pnlChart"></canvas>
                 </div>
             </div>
         </div>
@@ -256,20 +285,18 @@
     <!-- TOAST -->
     <div class="toast" id="toast"><span id="toastText"></span></div>
 
-    <!-- SHARE SUMMARY MODAL (PROP FIRM STYLE + THEME SWITCHER + MINI CHART) -->
+    <!-- SHARE SUMMARY MODAL -->
     <div class="modal" id="summaryModal">
         <div class="modal-content summary-modal-box">
             <h2 style="margin-bottom: 4px; font-size: 18px;">Performance Certificate</h2>
             <p style="margin-bottom: 12px; font-size: 12px; opacity: 0.6;">เลือกธีมการ์ดแล้วกด Copy เพื่อแชร์</p>
 
-            <!-- CARD THEME SELECTOR -->
             <div class="card-theme-bar">
                 <button class="theme-chip active" onclick="setShareTheme('cyber', this)">🌌 Cyber Dark</button>
                 <button class="theme-chip" onclick="setShareTheme('gold', this)">👑 Gold VIP</button>
                 <button class="theme-chip" onclick="setShareTheme('minimal', this)">🤍 Obsidian Clean</button>
             </div>
 
-            <!-- EXPORTABLE CARD -->
             <div id="summaryCard" class="summary-card-export theme-cyber">
                 <img src="Logo1.png" class="summary-watermark" alt="">
 
@@ -289,7 +316,6 @@
                     <h1 id="sumTotalPnL">$0.00</h1>
                 </div>
 
-                <!-- MINI EQUITY SPARKLINE -->
                 <div class="mini-chart-box">
                     <canvas id="shareMiniChart"></canvas>
                 </div>
@@ -329,4 +355,5 @@
     <script src="js/dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
+
 </html>

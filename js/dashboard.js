@@ -13,7 +13,6 @@ let currentEquityFilter = "all";
 let currentPnLType = "win";
 let currentTransType = "deposit";
 
-// แสดงชื่อ Operator บน Header
 document.addEventListener("DOMContentLoaded", async () => {
     const welcomeEl = document.getElementById("welcomeUser");
     if (welcomeEl && user?.username) {
@@ -35,6 +34,11 @@ function logout() {
     window.location = "login.html";
 }
 
+function parseLocalDate(dateStr) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d);
+}
+
 /* ======================
    ANIMATED NUMBER COUNTER
 ====================== */
@@ -42,7 +46,7 @@ function animateValue(elementId, endValue, prefix = "", suffix = "", decimals = 
     const el = document.getElementById(elementId);
     if (!el) return;
 
-    const duration = 650;
+    const duration = 600;
     const startTime = performance.now();
     const startValue = 0;
 
@@ -95,29 +99,22 @@ function setEquityFilter(filter, btnEl) {
     applyEquityFilterAndDraw();
 }
 
-// Helper แปลง YYYY-MM-DD เป็น Date แบบ Local Time เป๊ะๆ ไม่เพี้ยนตาม Timezone
-function parseLocalDate(dateStr) {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(y, m - 1, d);
-}
-
 function applyEquityFilterAndDraw() {
     if (!currentTradesData || currentTradesData.length === 0) {
         drawEquity([], []);
         return;
     }
 
-    // ยึดวันที่มีการเทรดล่าสุดเป็นจุดอ้างอิง (แทนวันที่ปัจจุบันที่อาจไม่มีรายการเทรด)
     const latestTradeDate = parseLocalDate(currentTradesData[currentTradesData.length - 1].date);
     let filtered = [...currentTradesData];
 
     if (currentEquityFilter === "7d") {
         const cutoff = new Date(latestTradeDate);
-        cutoff.setDate(latestTradeDate.getDate() - 6); // นับรวมวันล่าสุดเป็น 7 วัน
+        cutoff.setDate(latestTradeDate.getDate() - 6);
         filtered = filtered.filter(t => parseLocalDate(t.date) >= cutoff);
     } else if (currentEquityFilter === "30d") {
         const cutoff = new Date(latestTradeDate);
-        cutoff.setDate(latestTradeDate.getDate() - 29); // นับรวมวันล่าสุดเป็น 30 วัน
+        cutoff.setDate(latestTradeDate.getDate() - 29);
         filtered = filtered.filter(t => parseLocalDate(t.date) >= cutoff);
     } else if (currentEquityFilter === "month") {
         filtered = filtered.filter(t => {
@@ -249,17 +246,25 @@ function openModal(date) {
     loadTrade(date);
 }
 
-function closeModal() { document.getElementById("tradeModal").style.display = "none"; }
-function closeSummaryModal() { document.getElementById("summaryModal").style.display = "none"; }
+function closeModal() {
+    document.getElementById("tradeModal").style.display = "none";
+}
+
+function closeSummaryModal() {
+    document.getElementById("summaryModal").style.display = "none";
+}
 
 function openTransactionModal(type) {
     currentTransType = type;
-    document.getElementById("transModalTitle").innerText = type === "deposit" ? "💵 ฝากเงิน (Deposit)" : "💸 ถอนเงิน (Withdraw)";
+    document.getElementById("transModalTitle").innerText =
+        type === "deposit" ? "💵 ฝากเงิน (Deposit)" : "💸 ถอนเงิน (Withdraw)";
     document.getElementById("transAmountInput").value = "";
     document.getElementById("transactionModal").style.display = "flex";
 }
 
-function closeTransactionModal() { document.getElementById("transactionModal").style.display = "none"; }
+function closeTransactionModal() {
+    document.getElementById("transactionModal").style.display = "none";
+}
 
 async function saveTransaction() {
     const amountVal = parseFloat(document.getElementById("transAmountInput").value);
@@ -364,7 +369,9 @@ async function deleteTrade() {
     await refreshDashboard();
 }
 
-function resetTrades() { document.getElementById("resetModal").style.display = "flex"; }
+function resetTrades() {
+    document.getElementById("resetModal").style.display = "flex";
+}
 
 async function confirmReset() {
     await client.from("trades").delete().eq("user_id", user.id);
@@ -407,12 +414,12 @@ async function loadTrades() {
         document.getElementById("expectancy").innerText = "$0.00";
         document.getElementById("strategyScore").innerText = "0.0";
         document.getElementById("streakBadge").innerText = "🔥 0 Day Streak";
-        document.getElementById("roiPercent").innerText = "ROI: 0.0%";
+        document.getElementById("roiPercent").innerText = "ROI: +0.0%";
         document.getElementById("winLossCount").innerText = "0W / 0L Days";
         document.getElementById("avgTradesDay").innerText = "Avg 0.0 / day";
 
         drawEquity([], []);
-        drawWin([], []);
+        drawWin([]);
         drawPnL([], []);
         return;
     }
@@ -428,7 +435,6 @@ async function loadTrades() {
     let peak = 0;
     let maxDD = 0;
 
-    // คำนวณ Win Streak ปัจจุบันจากวันล่าสุดย้อนกลับ
     let currentStreak = 0;
     for (let i = data.length - 1; i >= 0; i--) {
         if (Number(data[i].pnl) > 0) currentStreak++;
@@ -444,8 +450,13 @@ async function loadTrades() {
         totalTradesCount += count;
         labels.push(t.date);
 
-        if (pnl > 0) { wins++; grossProfit += pnl; }
-        else if (pnl < 0) { losses++; grossLoss += Math.abs(pnl); }
+        if (pnl > 0) {
+            wins++;
+            grossProfit += pnl;
+        } else if (pnl < 0) {
+            losses++;
+            grossLoss += Math.abs(pnl);
+        }
 
         if (totalPnL > peak) peak = totalPnL;
         const dd = peak - totalPnL;
@@ -467,7 +478,6 @@ async function loadTrades() {
     const currentBalance = capital + totalPnL;
     const roi = capital > 0 ? (totalPnL / capital) * 100 : 0;
 
-    // อัปเดตสีและ Ambient Glow
     const balanceElem = document.getElementById("totalBalance");
     balanceElem.style.color = currentBalance >= 0 ? "#38bdf8" : "#f87171";
 
@@ -478,7 +488,6 @@ async function loadTrades() {
     if (totalPnL > 0) pnlCard.classList.add("glow-win");
     if (totalPnL < 0) pnlCard.classList.add("glow-loss");
 
-    // เรียกใช้ Animated Number Counter
     animateValue("totalBalance", currentBalance, "$", "", 2);
     animateValue("totalPnL", totalPnL, "$", "", 2);
     animateValue("winrate", winrate, "", "%", 1);
@@ -496,7 +505,7 @@ async function loadTrades() {
     document.getElementById("strategyScore").innerText = strategyScore.toFixed(1);
 
     applyEquityFilterAndDraw();
-    drawWin(labels, pnlList);
+    drawWin(pnlList);
     drawPnL(labels, pnlList);
 
     if (document.getElementById("listContainer").style.display !== "none") {
@@ -505,7 +514,7 @@ async function loadTrades() {
 }
 
 /* ======================
-   CHARTS (WITH BREAK-EVEN LINE)
+   CHARTS
 ====================== */
 function drawEquity(labels, data) {
     if (equityChart) equityChart.destroy();
@@ -516,7 +525,7 @@ function drawEquity(labels, data) {
     const isPositive = lastVal >= 0;
     const lineColor = isPositive ? "#22c55e" : "#ef4444";
 
-    const gradient = ctx.createLinearGradient(0, 0, 0, 240);
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
     gradient.addColorStop(0, isPositive ? "rgba(34, 197, 94, 0.35)" : "rgba(239, 68, 68, 0.35)");
     gradient.addColorStop(1, "rgba(2, 6, 23, 0.0)");
 
@@ -561,50 +570,74 @@ function drawEquity(labels, data) {
                 }
             },
             scales: {
-                x: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", maxTicksLimit: 8 } },
-                y: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v) } }
+                x: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", maxTicksLimit: 8, font: { size: 10 } } },
+                y: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", font: { size: 10 }, callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v) } }
             }
         }
     });
 }
 
-function drawWin(labels, pnlList) {
+function drawWin(pnlList) {
     if (winChart) winChart.destroy();
     const ctx = document.getElementById("winChart")?.getContext("2d");
     if (!ctx) return;
 
-    let wins = 0;
-    const winrateData = pnlList.map((pnl, i) => {
-        if (pnl > 0) wins++;
-        return ((wins / (i + 1)) * 100).toFixed(1);
+    let wins = 0, losses = 0, grossWin = 0, grossLoss = 0;
+    pnlList.forEach(p => {
+        if (p > 0) {
+            wins++;
+            grossWin += p;
+        } else if (p < 0) {
+            losses++;
+            grossLoss += Math.abs(p);
+        }
     });
 
-    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-    gradient.addColorStop(0, "rgba(56, 189, 248, 0.3)");
-    gradient.addColorStop(1, "rgba(56, 189, 248, 0.0)");
+    const total = wins + losses;
+    const winrate = total > 0 ? (wins / total) * 100 : 0;
+    const avgWin = wins > 0 ? grossWin / wins : 0;
+    const avgLoss = losses > 0 ? grossLoss / losses : 0;
+    const payoff = avgLoss > 0 ? (avgWin / avgLoss) : avgWin;
+
+    const gaugeText = document.getElementById("gaugeWinrate");
+    if (gaugeText) gaugeText.innerText = winrate.toFixed(1) + "%";
+
+    const avgWinEl = document.getElementById("avgWinText");
+    if (avgWinEl) avgWinEl.innerText = `+$${avgWin.toFixed(2)}`;
+
+    const avgLossEl = document.getElementById("avgLossText");
+    if (avgLossEl) avgLossEl.innerText = `-$${avgLoss.toFixed(2)}`;
+
+    const payoffEl = document.getElementById("payoffBadge");
+    if (payoffEl) payoffEl.innerText = `PAYOFF ${payoff.toFixed(2)}R`;
+
+    const chartData = total > 0 ? [wins, losses] : [1, 0];
+    const chartColors = total > 0
+        ? ["#22c55e", "rgba(239, 68, 68, 0.75)"]
+        : ["rgba(255, 255, 255, 0.08)", "transparent"];
 
     winChart = new Chart(ctx, {
-        type: "line",
+        type: "doughnut",
         data: {
-            labels,
+            labels: ["Winning Days", "Losing Days"],
             datasets: [{
-                label: "Winrate (%)",
-                data: winrateData,
-                borderColor: "#38bdf8",
-                borderWidth: 2,
-                backgroundColor: gradient,
-                fill: true,
-                tension: 0.3,
-                pointRadius: 2
+                data: chartData,
+                backgroundColor: chartColors,
+                borderColor: "#0f172a",
+                borderWidth: 3,
+                hoverOffset: 5
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false }, ticks: { color: "#94a3b8", maxTicksLimit: 6 } },
-                y: { min: 0, max: 100, grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", callback: (v) => v + "%" } }
+            cutout: "74%",
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    enabled: total > 0,
+                    callbacks: { label: (c) => ` ${c.label}: ${c.raw} days` }
+                }
             }
         }
     });
@@ -615,10 +648,45 @@ function drawPnL(labels, data) {
     const ctx = document.getElementById("pnlChart")?.getContext("2d");
     if (!ctx) return;
 
+    const bestDay = data.length > 0 ? Math.max(...data, 0) : 0;
+    const worstDay = data.length > 0 ? Math.min(...data, 0) : 0;
+    const bestEl = document.getElementById("bestDayBadge");
+    const worstEl = document.getElementById("worstDayBadge");
+    if (bestEl) bestEl.innerText = `MAX +$${bestDay.toFixed(0)}`;
+    if (worstEl) worstEl.innerText = `MIN -$${Math.abs(worstDay).toFixed(0)}`;
+
+    const winGrad = ctx.createLinearGradient(0, 0, 0, 220);
+    winGrad.addColorStop(0, "rgba(34, 197, 94, 0.95)");
+    winGrad.addColorStop(1, "rgba(34, 197, 94, 0.15)");
+
+    const lossGrad = ctx.createLinearGradient(0, 0, 0, 220);
+    lossGrad.addColorStop(0, "rgba(239, 68, 68, 0.15)");
+    lossGrad.addColorStop(1, "rgba(239, 68, 68, 0.95)");
+
     const formattedLabels = labels.map(d => {
         const p = d.split("-");
         return p.length === 3 ? `${p[2]}/${p[1]}` : d;
     });
+
+    const barValuePlugin = {
+        id: "barValuePlugin",
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            ctx.save();
+            ctx.font = "600 11px 'JetBrains Mono', monospace";
+            ctx.textAlign = "center";
+
+            chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                const val = data[index];
+                if (val === undefined) return;
+                const text = (val >= 0 ? "+$" : "-$") + Math.abs(val).toFixed(0);
+                ctx.fillStyle = val >= 0 ? "#4ade80" : "#f87171";
+                const yPos = val >= 0 ? bar.y - 8 : bar.y + 15;
+                ctx.fillText(text, bar.x, yPos);
+            });
+            ctx.restore();
+        }
+    };
 
     pnlChart = new Chart(ctx, {
         type: "bar",
@@ -626,18 +694,40 @@ function drawPnL(labels, data) {
             labels: formattedLabels,
             datasets: [{
                 data,
-                backgroundColor: data.map(v => v >= 0 ? "rgba(34, 197, 94, 0.8)" : "rgba(239, 68, 68, 0.8)"),
-                borderRadius: 5,
-                maxBarThickness: 28
+                backgroundColor: data.map(v => v >= 0 ? winGrad : lossGrad),
+                borderColor: data.map(v => v >= 0 ? "#4ade80" : "#f87171"),
+                borderWidth: 1.5,
+                borderRadius: 8,
+                maxBarThickness: 42
             }]
         },
+        plugins: [barValuePlugin],
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            layout: { padding: { top: 24, bottom: 8 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => ` Net PnL: ${c.raw >= 0 ? '+' : '-'}$${Math.abs(c.raw).toFixed(2)}`
+                    }
+                }
+            },
             scales: {
-                x: { grid: { display: false }, ticks: { color: "#94a3b8", maxTicksLimit: 8 } },
-                y: { grid: { color: "rgba(255, 255, 255, 0.04)" }, ticks: { color: "#94a3b8", callback: (v) => "$" + v } }
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        padding: 16,
+                        color: "#cbd5e1",
+                        font: { family: "'JetBrains Mono', monospace" }
+                    }
+                },
+                y: {
+                    grace: "18%",
+                    grid: { color: "rgba(255, 255, 255, 0.04)" },
+                    ticks: { color: "#64748b", callback: (v) => (v >= 0 ? "$" : "-$") + Math.abs(v) }
+                }
             }
         }
     });
