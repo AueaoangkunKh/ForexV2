@@ -41,9 +41,9 @@ body {
 .container {
     position: relative;
     z-index: 1;
-    max-width: 1380px;
+    max-width: 1220px; /* ปรับจาก 1380px เป็น 1220px เพื่อให้พอคูณ zoom: 1.1 แล้วไม่ล้นขอบขวา */
     margin: auto;
-    zoom: 1.1; /* ล็อกสเกล 110% อัตโนมัติเหมือนตอนกดซูมเบราว์เซอร์ */
+    zoom: 1.1;
 }
 
 /* HEADER */

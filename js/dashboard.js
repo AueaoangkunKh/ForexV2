@@ -402,12 +402,20 @@ async function loadTrades() {
 
     currentTradesData = data || [];
 
-    if (!data || data.length === 0) {
+if (!data || data.length === 0) {
         animateValue("totalBalance", capital, "$", "", 2);
         animateValue("totalPnL", 0, "$", "", 2);
         animateValue("winrate", 0, "", "%", 1);
         animateValue("totalTrades", 0, "", "", 0);
         animateValue("maxDD", 0, "$", "", 2);
+
+        const balanceElem = document.getElementById("totalBalance");
+        if (balanceElem) balanceElem.style.color = capital >= 0 ? "#38bdf8" : "#f87171";
+
+        const pnlElem = document.getElementById("totalPnL");
+        const pnlCard = document.getElementById("pnlCardGlow");
+        if (pnlElem) pnlElem.style.color = "#4ade80";
+        if (pnlCard) pnlCard.classList.remove("glow-win", "glow-loss");
 
         document.getElementById("profitFactor").innerText = "0.00";
         document.getElementById("riskReward").innerText = "0.00";
@@ -417,6 +425,13 @@ async function loadTrades() {
         document.getElementById("roiPercent").innerText = "ROI: +0.0%";
         document.getElementById("winLossCount").innerText = "0W / 0L Days";
         document.getElementById("avgTradesDay").innerText = "Avg 0.0 / day";
+
+        const avgWinEl = document.getElementById("avgWinText");
+        const avgLossEl = document.getElementById("avgLossText");
+        const payoffEl = document.getElementById("payoffBadge");
+        if (avgWinEl) avgWinEl.innerText = "+$0.00";
+        if (avgLossEl) avgLossEl.innerText = "-$0.00";
+        if (payoffEl) payoffEl.innerText = "PAYOFF 0.00R";
 
         drawEquity([], []);
         drawWin([]);
