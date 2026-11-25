@@ -22,6 +22,21 @@ async function register() {
     }
 
     btn.disabled = true;
+
+    // เช็กก่อนว่ามีชื่อนี้ในระบบหรือยัง (ไม่สนตัวพิมพ์เล็ก-ใหญ่)
+    const { data: existingUser } = await client
+        .from("users")
+        .select("id")
+        .ilike("username", username)
+        .maybeSingle();
+
+    if (existingUser) {
+        btn.disabled = false;
+        msg.style.color = "#f87171";
+        msg.innerText = "⚠ Username already exists";
+        return;
+    }
+
     const hashedPassword = await hashPassword(password);
 
     const { error } = await client
@@ -69,11 +84,11 @@ async function login() {
 
     const hashedPassword = await hashPassword(password);
 
-    // เช็กทั้งรหัสที่เข้ารหัสแล้ว และรหัสเดิม (เผื่อบัญชีเก่าที่สมัครไว้ก่อนอัปเดต)
+    // ใช้ .ilike แทน .eq เพื่อให้พิมพ์ riyuki, Riyuki หรือ RIYUKI ก็ล็อกอินได้ทั้งหมด
     const { data, error } = await client
         .from("users")
         .select("*")
-        .eq("username", username)
+        .ilike("username", username)
         .or(`password.eq.${hashedPassword},password.eq.${password}`)
         .single();
 
