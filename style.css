@@ -443,7 +443,7 @@ button:hover {
 
 .calendar-weekdays {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
     text-align: center;
     font-weight: 600;
@@ -456,7 +456,7 @@ button:hover {
 
 .calendar {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
 }
 
@@ -471,6 +471,7 @@ button:hover {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    overflow: hidden;
 }
 
 .day:hover:not(.disabled-day) {
@@ -716,7 +717,12 @@ button:hover {
     body { padding: 12px; }
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .stat-card p { font-size: 19px; }
-    .day { min-height: 44px; }
+
+    /* ปรับปฏิทินบนมือถือให้คอลัมน์เท่ากันเป๊ะและตัวเลขไม่ล้นกรอบ */
+    .calendar-weekdays, .calendar { gap: 3px; }
+    .day { min-height: 44px; padding: 4px 2px; overflow: hidden; }
+    .day-pnl { font-size: 8.5px; letter-spacing: -0.5px; }
     .day-count { display: none; }
+
     .summary-card-export { width: 330px; padding: 20px; }
 }
